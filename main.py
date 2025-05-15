@@ -1,11 +1,11 @@
 from dotenv import load_dotenv
 import logging
 from langgraph.graph import StateGraph, START, END
-from langchain_core.messages import AnyMessage, HumanMessage
-from typing import TypedDict, Optional, List, Dict
+from langchain_core.messages import HumanMessage
 from tools.pdf_extractor import pdf_extractor
 from tools.statement_parser import statement_parser
 from tools.postgres_writer import postgres_writer
+from shared.agent_state import AgentState
 from langchain_tavily import TavilySearch
 from shared.dependencies import get_llm
 from datetime import datetime
@@ -15,20 +15,14 @@ from PIL import Image as PILImage
 from io import BytesIO
 from langchain_core.runnables.graph_mermaid import MermaidDrawMethod
 
-class AgentState(TypedDict):
-    messages: List[AnyMessage]
-    extracted_text: Optional[str]
-    parsed_data: Optional[Dict]
-    db_write_result: Optional[str]
-    job_id: Optional[str]
-    start_timestamp: Optional[str]
-    end_timestamp: Optional[str]
-
 def preprocess(state):
     print("[Preprocess] Validating inputs...")
     
     if "messages" not in state or not state["messages"]:
         raise ValueError("messages[] cannot be empty.")
+    
+    if "pdf_path" not in state or not state["pdf_path"]:
+        raise ValueError("pdf_path cannot be empty.")
     
     state["job_id"] = str(uuid.uuid4())
     state["start_timestamp"] = datetime.utcnow().isoformat()
@@ -81,6 +75,7 @@ if __name__ == "__main__":
         """
     result = pipeline.invoke({
         "messages": [HumanMessage(content=prompt)],
+        "pdf_path": "statements/april-2025.pdf"
     })
 
     print("Agent execution complete, result:")

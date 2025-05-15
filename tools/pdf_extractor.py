@@ -1,8 +1,9 @@
 from langchain.tools import tool
 import pdfplumber
+from shared.agent_state import AgentState
 
 @tool
-def pdf_extractor(pdf_path: str) -> str:
+def pdf_extractor(state: AgentState) -> AgentState:
     """
     Extracts the full textual content and tabular data from a PDF file.
 
@@ -15,17 +16,16 @@ def pdf_extractor(pdf_path: str) -> str:
     and page boundaries are clearly marked.
 
     Args:
-        pdf_path (str): The file path to the PDF document to be processed.
+        state (AgentState): Graph state containing 'pdf_path'.
 
     Returns:
-        str: A unified plain text output containing both the document text 
-             and any table data.
+        AgentState: Updated state with 'extracted_text' containing both the document text and any table data.
     """
 
-    print(f"[pdf_extractor] {pdf_path=}")
+    print(f"[pdf_extractor] path = {state['pdf_path']}")
 
     output = ""
-    with pdfplumber.open(pdf_path) as pdf:
+    with pdfplumber.open(state["pdf_path"]) as pdf:
         for page in pdf.pages:
             output += f"\n\n--- Page {page.page_number} ---\n\n"
             output += page.extract_text() or ""
@@ -35,4 +35,6 @@ def pdf_extractor(pdf_path: str) -> str:
                     output += "\n[Table]\n"
                     for row in table:
                         output += " | ".join(str(cell) for cell in row) + "\n"
-    return output.strip()
+    
+    state["extracted_text"] = output.strip()
+    return state

@@ -1,10 +1,11 @@
 from langchain.tools import tool
 from langchain_core.messages import HumanMessage
 from shared.dependencies import get_llm
+from shared.agent_state import AgentState
 import json
 
 @tool
-def statement_parser(text: str) -> dict:
+def statement_parser(state: AgentState) -> AgentState:
     """
     Parses raw bank statement text into structured account and transaction data.
 
@@ -27,15 +28,13 @@ def statement_parser(text: str) -> dict:
             - amount: Transaction amount (positive or negative).
 
     Args:
-        text (str): The full text content of the bank statement, 
-                    including any transaction data and summaries.
+        state (AgentState): Graph state containing full text content of the bank statement, including any transaction data and summaries.
 
     Returns:
-        dict: A dictionary containing structured account data and 
-              transaction details as extracted by the LLM.
+        AgentState: Updated state with 'parsed_data' containing structured account data and transaction details.
     """
 
-    print(f"[statement_parser] text={text[:15]}...")
+    print(f"[statement_parser] text = {state['extracted_text'][:15]}...")
 
     llm = get_llm()
     prompt = f"""
@@ -56,7 +55,8 @@ def statement_parser(text: str) -> dict:
             transactions: list of date, transaction_details, amount.
 
         Text:
-        {text}
+        {state["extracted_text"]}
         """
     response = llm.invoke([HumanMessage(content=prompt)])
-    return json.loads(response.content.strip())
+    state["parsed_data"] = json.loads(response.content.strip())
+    return state

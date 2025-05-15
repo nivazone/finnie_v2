@@ -1,9 +1,10 @@
 from langchain.tools import tool
 from shared.dependencies import get_db_connection
 from datetime import datetime
+from shared.agent_state import AgentState
 
 @tool
-def postgres_writer(parsed_data: dict) -> str:
+def postgres_writer(state: AgentState) -> AgentState:
     """
     Writes structured bank statement data and transactions into a PostgreSQL database.
 
@@ -17,7 +18,7 @@ def postgres_writer(parsed_data: dict) -> str:
            linked by a foreign key (`statement_id`).
 
     Args:
-        parsed_data (dict): A dictionary containing structured bank statement data.
+        state (AgentState): Graph state containing 'parsed_data'.
             Expected keys:
                 - account_holder (str)
                 - account_name (str)
@@ -34,12 +35,14 @@ def postgres_writer(parsed_data: dict) -> str:
                         - amount (float): Transaction amount.
 
     Returns:
-        str: A confirmation message indicating the inserted statement's primary key ID.
+        AgentState: State (unchanged).
     """
 
-    print(f"[postgres_writer] {dict=}")
+    print(f"[postgres_writer] dict = {state['parsed_data']}")
 
+    parsed_data = state["parsed_data"]
     conn = get_db_connection()
+    
     with conn:
         with conn.cursor() as cur:
             cur.execute("""
