@@ -17,7 +17,6 @@ from langchain_core.runnables.graph_mermaid import MermaidDrawMethod
 
 class AgentState(TypedDict):
     messages: List[AnyMessage]
-    pdf_path: Optional[str]
     extracted_text: Optional[str]
     parsed_data: Optional[Dict]
     db_write_result: Optional[str]
@@ -27,12 +26,13 @@ class AgentState(TypedDict):
 
 def preprocess(state):
     print("[Preprocess] Validating inputs...")
+    
     if "messages" not in state or not state["messages"]:
         raise ValueError("messages[] cannot be empty.")
-    if "pdf_path" not in state or not state["pdf_path"]:
-        raise ValueError("pdf_path must be provided.")
+    
     state["job_id"] = str(uuid.uuid4())
     state["start_timestamp"] = datetime.utcnow().isoformat()
+    
     print(f"[Preprocess] Job ID: {state['job_id']}")
     return state
 
@@ -73,11 +73,13 @@ if __name__ == "__main__":
 
     prompt = """
         You are an AI agent named Finnie who can extract and parse bank statements.
-        The statement can be located using pdf_path in AgentState.
+        The path to the statement is statements/april-2025.pdf.
+        Give the parsed statement output.
+        You have all the tools required to complete the job.
+        If you encounter an error or an exception, do not retry, end the processing.
         """
     result = pipeline.invoke({
         "messages": [HumanMessage(content=prompt)],
-        "pdf_path": "statements/april-2025.pdf"
     })
 
     print("Agent execution complete, result:", result)

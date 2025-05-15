@@ -38,7 +38,10 @@ def statement_parser(text: str) -> dict:
     llm = get_llm()
     prompt = f"""
         You are a bank statement parser.
-        Output ONLY raw JSON.
+        Important:
+        - Return a valid **raw JSON object**, not inside a markdown block.
+        - Do not format the output as a code block. Do not use ```json or ``` markers.
+        - Only output the pure JSON object without any extra text.
         Extract the following fields:
             account_holder: name of the account owner,
             account_name: name of the account,
