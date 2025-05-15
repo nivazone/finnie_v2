@@ -73,16 +73,17 @@ if __name__ == "__main__":
 
     prompt = """
         You are an AI agent named Finnie who can extract and parse bank statements.
-        The path to the statement is statements/april-2025.pdf.
-        Give the parsed statement output.
         You have all the tools required to complete the job.
+        The path to the statement is statements/april-2025.pdf.
+        Process the statement and save it to the database.
+        
         If you encounter an error or an exception, do not retry, end the processing.
         """
     result = pipeline.invoke({
         "messages": [HumanMessage(content=prompt)],
     })
 
-    print("Agent execution complete, result:", result)
+    print("Agent execution complete, result:")
 
     # png_bytes = pipeline.get_graph(xray=True).draw_mermaid_png(
     #     draw_method=MermaidDrawMethod.PYPPETEER

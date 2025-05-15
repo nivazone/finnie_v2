@@ -37,6 +37,8 @@ def postgres_writer(parsed_data: dict) -> str:
         str: A confirmation message indicating the inserted statement's primary key ID.
     """
 
+    print(f"[postgres_writer] {dict=}")
+
     conn = get_db_connection()
     with conn:
         with conn.cursor() as cur:

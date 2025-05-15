@@ -22,6 +22,8 @@ def pdf_extractor(pdf_path: str) -> str:
              and any table data.
     """
 
+    print(f"[pdf_extractor] {pdf_path=}")
+
     output = ""
     with pdfplumber.open(pdf_path) as pdf:
         for page in pdf.pages:

@@ -35,6 +35,8 @@ def statement_parser(text: str) -> dict:
               transaction details as extracted by the LLM.
     """
 
+    print(f"[statement_parser] text={text[:15]}...")
+
     llm = get_llm()
     prompt = f"""
         You are a bank statement parser.
