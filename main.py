@@ -5,8 +5,9 @@ from langchain_core.messages import HumanMessage
 from tools.pdf_extractor import pdf_extractor
 from tools.statement_parser import statement_parser
 from tools.postgres_writer import postgres_writer
+from tools.transaction_classifier import transaction_classifier
+from tools.web_searcher import web_searcher
 from shared.agent_state import AgentState
-from langchain_tavily import TavilySearch
 from shared.dependencies import get_llm
 from datetime import datetime
 from langgraph.prebuilt import create_react_agent
@@ -16,7 +17,7 @@ from io import BytesIO
 from langchain_core.runnables.graph_mermaid import MermaidDrawMethod
 
 def preprocess(state):
-    print("[Preprocess] Validating inputs...")
+    print("[preprocess] Validating inputs...")
     
     if "messages" not in state or not state["messages"]:
         raise ValueError("messages[] cannot be empty.")
@@ -24,28 +25,31 @@ def preprocess(state):
     if "pdf_path" not in state or not state["pdf_path"]:
         raise ValueError("pdf_path cannot be empty.")
     
+    if "categories" not in state or not state["categories"]:
+        raise ValueError("categories[] cannot be empty.")
+    
     state["job_id"] = str(uuid.uuid4())
     state["start_timestamp"] = datetime.utcnow().isoformat()
     
-    print(f"[Preprocess] Job ID: {state['job_id']}")
+    print(f"[preprocess] Job ID: {state['job_id']}")
     return state
 
 def postprocess(state):
-    print("[Postprocess] Finalizing job...")
+    print("[postprocess] Finalizing job...")
     state["end_timestamp"] = datetime.utcnow().isoformat()
-    print(f"[Postprocess] Job {state['job_id']} complete.")
-    print(f"Started: {state['start_timestamp']}")
-    print(f"Ended: {state['end_timestamp']}")
+    print(f"[postprocess] Job {state['job_id']} complete.")
+    print(f"started: {state['start_timestamp']}")
+    print(f"ended: {state['end_timestamp']}")
     return state
 
 def build_agent():
     llm = get_llm()
-    search_tool = TavilySearch(max_results=3)
     tools = [
         pdf_extractor,
         statement_parser,
         postgres_writer,
-        search_tool
+        transaction_classifier,
+        web_searcher
     ]
     
     return create_react_agent(llm, tools)
@@ -66,16 +70,27 @@ if __name__ == "__main__":
     pipeline = graph.compile()
 
     prompt = """
-        You are an AI agent named Finnie who can extract and parse bank statements.
+        You are an AI agent named Finnie who can extract, parse bank statements and classify transactions.
         You have all the tools required to complete the job.
         The path to the statement is statements/april-2025.pdf.
         Process the statement and save it to the database.
-        
+        And then assign a category for each transaction and save it to the database.
         If you encounter an error or an exception, do not retry, end the processing.
         """
     result = pipeline.invoke({
         "messages": [HumanMessage(content=prompt)],
-        "pdf_path": "statements/april-2025.pdf"
+        "pdf_path": "statements/april-2025.pdf",
+        "categories": [
+            "Groceries", 
+            "Transport", 
+            "Utilities", 
+            "Insurance",
+            "Entertainment", 
+            "Subscriptions",
+            "Healthcare",
+            "Dining",
+            "Unknown"
+        ]
     })
 
     print("Agent execution complete, result:")

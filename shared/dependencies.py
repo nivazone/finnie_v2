@@ -1,5 +1,6 @@
 from langchain_openai import ChatOpenAI
 from psycopg import connect, Connection
+from langchain_tavily import TavilySearch
 import os
 
 def get_llm() -> ChatOpenAI:
@@ -18,3 +19,6 @@ def get_db_connection() -> Connection:
         user=os.getenv("POSTGRES_USER"),
         password=os.getenv("POSTGRES_PASSWORD"),
     )
+
+def get_web_search_provider() -> TavilySearch:
+    return TavilySearch(max_results=3, include_answer=True)

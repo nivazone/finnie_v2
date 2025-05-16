@@ -7,6 +7,7 @@ class AgentState(TypedDict):
     pdf_path: str
     extracted_text: Optional[str]
     parsed_data: Optional[Dict]
+    categories: List[str]
     job_id: str
     start_timestamp: str
     end_timestamp: str

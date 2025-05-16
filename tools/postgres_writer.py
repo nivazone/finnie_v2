@@ -38,7 +38,7 @@ def postgres_writer(state: AgentState) -> AgentState:
         AgentState: State (unchanged).
     """
 
-    print(f"[postgres_writer] dict = {state['parsed_data']}")
+    print(f"[postgres_writer] commencing database writes...")
 
     parsed_data = state["parsed_data"]
     conn = get_db_connection()

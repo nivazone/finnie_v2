@@ -34,7 +34,7 @@ def statement_parser(state: AgentState) -> AgentState:
         AgentState: Updated state with 'parsed_data' containing structured account data and transaction details.
     """
 
-    print(f"[statement_parser] text = {state['extracted_text'][:15]}...")
+    print(f"[statement_parser] commencing parsing extracted text...")
 
     llm = get_llm()
     prompt = f"""
