@@ -7,7 +7,6 @@ import json
 def transaction_classifier(state: AgentState) -> AgentState:
     """
     Classifies individual transactions into spending categories and updates the database.
-
     This tool queries the transactions table for a specific bank statement, 
     uses an LLM to assign each transaction to a category, and updates 
     the `transactions.category` field accordingly.
@@ -19,16 +18,10 @@ def transaction_classifier(state: AgentState) -> AgentState:
         - reason: Explanation of why the category was assigned
 
     Args:
-        state (AgentState): The LangGraph state, must contain:
-            - parsed_data (dict): from previous statement_parser agent
-            - categories (list[str]): the list of allowed categories
+        state (AgentState): The LangGraph state
 
     Returns:
         AgentState: The unchanged state after transaction classification completes.
-
-    Raises:
-        Exception: If the statement record is not found in the database.
-        psycopg.DatabaseError: If any database write fails.
 
     Example of expected LLM output per transaction:
         {
@@ -44,13 +37,19 @@ def transaction_classifier(state: AgentState) -> AgentState:
 
     print("[transaction_classifier] classifying transactions...")
 
-    parsed = state["parsed_data"]
-    account_holder = parsed.get("account_holder")
-    account_name = parsed.get("account_name")
-    start_date = datetime.strptime(parsed["start"], "%d/%m/%y").date()
-    end_date = datetime.strptime(parsed["end"], "%d/%m/%y").date()
-    categories = state["categories"]
-    categories_str = ", ".join(categories)
+    allowed_categories = [
+        "Groceries", 
+        "Transport", 
+        "Utilities", 
+        "Insurance",
+        "Entertainment", 
+        "Subscriptions",
+        "Healthcare",
+        "Dining",
+        "Vet",
+        "Unknown"
+    ]
+    categories_str = ", ".join(allowed_categories)
 
     llm = get_llm()
     conn = get_db_connection()

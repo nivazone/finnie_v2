@@ -25,9 +25,6 @@ def preprocess(state):
     if "pdf_path" not in state or not state["pdf_path"]:
         raise ValueError("pdf_path cannot be empty.")
     
-    if "categories" not in state or not state["categories"]:
-        raise ValueError("categories[] cannot be empty.")
-    
     state["job_id"] = str(uuid.uuid4())
     state["start_timestamp"] = datetime.utcnow().isoformat()
     
@@ -80,17 +77,6 @@ if __name__ == "__main__":
     result = pipeline.invoke({
         "messages": [HumanMessage(content=prompt)],
         "pdf_path": "statements/april-2025.pdf",
-        "categories": [
-            "Groceries", 
-            "Transport", 
-            "Utilities", 
-            "Insurance",
-            "Entertainment", 
-            "Subscriptions",
-            "Healthcare",
-            "Dining",
-            "Unknown"
-        ]
     })
 
     print("Agent execution complete, result:")
