@@ -42,7 +42,7 @@ def transaction_classifier(state: AgentState) -> AgentState:
         It is a fully autonomous agent step within the LangGraph pipeline.
     """
 
-    print("[transaction_classifier] commencing classifying transactions...")
+    print("[transaction_classifier] classifying transactions...")
 
     parsed = state["parsed_data"]
     account_holder = parsed.get("account_holder")
@@ -83,15 +83,11 @@ def transaction_classifier(state: AgentState) -> AgentState:
 
     with conn:
         with conn.cursor() as cur:
-            cur.execute("""
-                SELECT id FROM statements
-                WHERE account_holder = %s AND account_name = %s
-                AND start_date = %s AND end_date = %s
-            """, (account_holder, account_name, start_date, end_date))
+            cur.execute("""SELECT id FROM statements""")
             result = cur.fetchone()
 
             if not result:
-                raise Exception(f"Statement not found for {account_holder} {account_name}")
+                raise Exception(f"Statements not found")
 
             statement_id = result[0]
 

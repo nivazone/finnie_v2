@@ -22,7 +22,7 @@ def pdf_extractor(state: AgentState) -> AgentState:
         AgentState: Updated state with 'extracted_text' containing both the document text and any table data.
     """
 
-    print(f"[pdf_extractor] text commencing extraction...")
+    print(f"[pdf_extractor] extracting text...")
 
     output = ""
     with pdfplumber.open(state["pdf_path"]) as pdf:
