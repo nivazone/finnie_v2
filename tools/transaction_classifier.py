@@ -1,9 +1,10 @@
 from shared.dependencies import get_llm, get_db_connection
 from langchain_core.messages import HumanMessage
-from datetime import datetime
+from langchain.tools import tool
 from shared.agent_state import AgentState
 import json
 
+@tool
 def transaction_classifier(state: AgentState) -> AgentState:
     """
     Classifies individual transactions into spending categories and updates the database.
@@ -56,7 +57,13 @@ def transaction_classifier(state: AgentState) -> AgentState:
 
     prompt_template = f"""
         You are a financial transaction classification agent.
-        If you do not have enough data to confidently decide what the category is, do a web search to gather additional data.
+        **ALWAYS call the tool named `web_searcher` with the full transaction text BEFORE attempting classification.**
+        Use the tool to search for merchant or transaction context from the internet.
+
+        Once the search results are available, use BOTH:
+            - the original transaction text
+            - the web search result
+        to determine the most appropriate category.
         You must classify each transaction into ONE of the following categories:
         {categories_str}
 
@@ -69,6 +76,9 @@ def transaction_classifier(state: AgentState) -> AgentState:
                 - Return a valid **raw JSON object**, not inside a markdown block.
                 - Do not format the output as a code block. Do not use ```json or ``` markers.
                 - Only output the pure JSON object without any extra text.
+                - You MUST NOT guess.
+                - You MUST call `web_searcher` first.
+                - If you skip the tool call, your response will be rejected.
 
         Example:
         {{
@@ -110,7 +120,6 @@ def transaction_classifier(state: AgentState) -> AgentState:
 
                 except Exception as e:
                     print("[ERROR] Failed to parse LLM response as JSON:", e)
-                    print("[Full prompt]", full_prompt)
                     print("[Response content]:", response)
                     category = "Unknown"
 
