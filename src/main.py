@@ -229,10 +229,16 @@ if __name__ == "__main__":
     finnie = builder.compile()
 
     messages = [HumanMessage(content="""
-        Go through all the available bank statements and classify the transactions.
-        The output should be saved to database.
-        You must do a web search to get more details about the transaction decription before attempting to classify.
-        Following are the categories, only use these categories.
+        Process all available bank statement using the following workflow.
+            1. get plain text version of the statement.
+            2. parsethe plain text so that you can get JSON version.
+            3. save statement JSON to database for future use.
+            4. get transactions from the database and classify the transactions.
+            5. save the transaction classification to database.
+        
+        Important:
+        - You must do a web search to get more details about the transaction decription before attempting to classify.
+        - Following are the categories, only use these categories for classifying transactions.
             - Groceries
             - Transport
             - Utilities 
