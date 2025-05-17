@@ -1,18 +1,13 @@
 from dotenv import load_dotenv
-from typing import List, TypedDict, Annotated, Optional, cast, Any
 from langchain_openai import ChatOpenAI
 from langchain_core.messages import AnyMessage, SystemMessage, HumanMessage
-from langgraph.graph.message import add_messages
 
 
 from IPython.display import Image, display
 
-import json
-import os
 from PIL import Image as PILImage
 from io import BytesIO
 from langchain_core.runnables.graph_mermaid import MermaidDrawMethod
-from langgraph.prebuilt import InjectedState
 from config import get_settings
 from agent import get_graph
 
@@ -25,31 +20,6 @@ if __name__ == "__main__":
         base_url=s.OPENAI_BASE_URL,
         api_key=s.OPENAI_API_KEY,
     )
-
-    # tools = [
-    #     extract_text,
-    #     parse_statement_text,
-    #     write_statement_to_db,
-    #     read_statement_from_db,
-    #     update_transaction_classification,
-    #     search_web
-    # ]
-    # llm_with_tools = llm.bind_tools(tools)
-
-    # builder = StateGraph(AgentState)
-    # builder.add_node("agent", agent)
-    # builder.add_node("tools", ToolNode(tools))
-
-    # builder.add_edge(START, "agent")
-    # builder.add_conditional_edges(
-    #     "agent",
-    #     # If the latest message requires a tool, route to tools
-    #     # Otherwise, provide a direct response
-    #     tools_condition,
-    # )
-    # builder.add_edge("tools", "agent")
-
-    # finnie = builder.compile()
 
     finnie = get_graph(llm)
 
