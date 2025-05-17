@@ -1,3 +1,5 @@
+import pdfplumber
+
 def extract_text(path: str) -> str:
     """
     Extracts the full textual content and tabular data from a PDF file.
@@ -11,16 +13,17 @@ def extract_text(path: str) -> str:
 
     print(f"[extract_text] extracting text from {path}...")
     
-    all_text = """
-    bank statement
-    account name: Nivantha Mandawala
-    opening balance: $2000
-    closing balance: $4000
-    start: 01/04/2025
-    end: 30/04/2025
-    transactions:
-        01/04/2025  Tango Energy    $45
-        02/04/2025  Uber Eats       $34
-    """
+    output = ""
+    
+    with pdfplumber.open(path) as pdf:
+        for page in pdf.pages:
+            output += f"\n\n--- Page {page.page_number} ---\n\n"
+            output += page.extract_text() or ""
+            tables = page.extract_tables()
+            if tables:
+                for table in tables:
+                    output += "\n[Table]\n"
+                    for row in table:
+                        output += " | ".join(str(cell) for cell in row) + "\n"
 
-    return all_text
+    return output.strip()

@@ -1,4 +1,5 @@
 from dotenv import load_dotenv
+import logging
 from langchain_openai import ChatOpenAI
 from langchain_core.messages import AnyMessage, SystemMessage, HumanMessage
 
@@ -12,7 +13,9 @@ from config import get_settings
 from agent import get_graph
 
 if __name__ == "__main__":
+    logging.getLogger("pdfminer").setLevel(logging.ERROR)
     load_dotenv()
+    
     s = get_settings()
 
     llm = ChatOpenAI(
@@ -26,7 +29,7 @@ if __name__ == "__main__":
     messages = [HumanMessage(content="""
         Process all available bank statement using the following workflow.
             1. get plain text version of the statement.
-            2. parsethe plain text so that you can get JSON version.
+            2. parse the plain text so that you can get JSON version.
             3. save statement JSON to database for future use.
             4. get transactions from the database and classify the transactions.
             5. save the transaction classification to database.
