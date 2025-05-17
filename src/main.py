@@ -11,19 +11,13 @@ from io import BytesIO
 from langchain_core.runnables.graph_mermaid import MermaidDrawMethod
 from config import get_settings
 from agent import get_graph
+from dependencies import get_llm
 
 if __name__ == "__main__":
     logging.getLogger("pdfminer").setLevel(logging.ERROR)
     load_dotenv()
     
-    s = get_settings()
-
-    llm = ChatOpenAI(
-        model=s.MODEL_NAME,
-        base_url=s.OPENAI_BASE_URL,
-        api_key=s.OPENAI_API_KEY,
-    )
-
+    llm = get_llm()
     finnie = get_graph(llm)
 
     messages = [HumanMessage(content="""

@@ -1,13 +1,19 @@
+from dependencies import get_llm
+from langchain_core.messages import HumanMessage
+
 def parse_statement_text(text: str) -> str:
     """
     Parses raw bank statement text into structured account and transaction data.
 
     Extracted fields include:
-        - account name: Name or label of the account.
+        - account_holder: Name of the account owner.
+        - account_name: Name or label of the account.
         - start: Statement start date (string format).
         - end: Statement end date (string format).
         - opening_balance: Opening balance at start of period.
         - closing_balance: Closing balance at end of period.
+        - credit_limit: Credit limit (if applicable).
+        - interest_charged: Interest charges for the period.
         - transactions: List of transactions, each with:
             - date: Transaction date (string).
             - transaction_details: Merchant or description.
@@ -22,28 +28,29 @@ def parse_statement_text(text: str) -> str:
 
     print(f"[parse_statement_text] parsing extracted text...")
 
-    statement_json = """
-    {
-        "bank_statement": {
-            "account_name": "Nivantha Mandawala",
-            "opening_balance": 2000,
-            "closing_balance": 4000,
-            "start_date": "2025-04-01",
-            "end_date": "2025-04-30",
-            "transactions": [
-            {
-                "date": "2025-04-01",
-                "description": "Tango Energy",
-                "amount": 45
-            },
-            {
-                "date": "2025-04-02",
-                "description": "Uber Eats",
-                "amount": 34
-            }
-            ]
-        }
-    }
-    """
+    llm = get_llm()
+    prompt = f"""
+        You are a bank statement parser.
+        
+        Important:
+        - Return a valid **raw JSON object**, not inside a markdown block.
+        - Do not format the output as a code block. Do not use ```json or ``` markers.
+        - Only output the pure JSON object without any extra text.
+        
+        Parse the following fields:
+            account_holder: name of the account owner,
+            account_name: name of the account,
+            start: statement start date,
+            end: statement end date,
+            opening_balance: numeric opening balance,
+            closing_balance: numeric closing balance,
+            credit_limit: numeric credit limit,
+            interest_charged: numeric interest charged,
+            transactions: list of date, transaction_details, amount.
 
-    return statement_json
+        Raw text to parse:
+        {text}
+        """
+    response = llm.invoke([HumanMessage(content=prompt)])
+
+    return response.content.strip()
