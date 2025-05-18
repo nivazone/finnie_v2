@@ -53,7 +53,7 @@ def agent(state: AgentState, llm: ChatOpenAI):
         You can analyse bank statements and run computations with provided tools.
         Current statement file is {state["input_file"]}.
     """)
-    llm_with_tools = llm.bind_tools(TOOLS, parallel_tool_calls=False)
+    llm_with_tools = llm.bind_tools(TOOLS)
     
     return {
         "messages": [llm_with_tools.invoke([sys_msg] + state["messages"])],
