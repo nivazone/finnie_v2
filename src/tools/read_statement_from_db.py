@@ -3,11 +3,14 @@ import json
 from datetime import datetime
 from decimal import Decimal
 from psycopg.rows import dict_row
+from langgraph.prebuilt import InjectedState
+from typing import Annotated
+from state import AgentState
 
 def _to_float(value):
     return float(value) if isinstance(value, Decimal) else value
 
-def read_statement_from_db() -> str:
+def read_statement_from_db(state: Annotated[AgentState, InjectedState]) -> str:
     """
     Reads statement from database
 
@@ -19,6 +22,7 @@ def read_statement_from_db() -> str:
 
     try:
         conn = get_db_connection()
+
         with conn:
             with conn.cursor(row_factory=dict_row) as cur:
                 # Get statement and transactions in a single query
@@ -47,8 +51,9 @@ def read_statement_from_db() -> str:
                 """)
                 
                 rows = cur.fetchall()
+
                 if not rows:
-                    return json.dumps({"error": "No statements found in database"})
+                    return json.dumps({})
 
                 # First row contains statement data
                 statement = rows[0]
@@ -76,4 +81,5 @@ def read_statement_from_db() -> str:
 
     except Exception as e:
         print(f"[ERROR] Failed to read from database: {str(e)}")
-        return json.dumps({"error": str(e)})
+        state["fatal_err"] = True
+        return json.dumps({})
