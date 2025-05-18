@@ -1,15 +1,35 @@
-def update_transaction_classification(category: str) -> bool:
+from dependencies import get_db_connection
+from langchain_core.tools import tool
+
+@tool
+def update_transaction_classification(transaction_id: int, category: str) -> dict:
     """
-    Updates statement category in database
-    
+    Updates the category of a transaction for a given transaction id.
+
     Args:
+        transaction_id: Id of the transaction to be updated
         category: Category of the transaction in plain text
 
     Returns:
-        bool: True or False indicating DB write was successful or not.
+        dict: {"fatal_err": False} on success, {"fatal_err": True} on failure
     """
 
-    print(f"[update_transaction_classification] updating transaction category...")
+    print(f"[update_transaction_classification] setting category to '{category}'")
 
+    try:
+        conn = get_db_connection()
+        with conn:
+            with conn.cursor() as cur:
+                
+                cur.execute("""
+                    UPDATE transactions
+                    SET category = %s
+                    WHERE id = %s;
+                """, (category, transaction_id))
 
-    return True
+                conn.commit()
+                return {"fatal_err": False}
+
+    except Exception as e:
+        print(f"[ERROR] Failed to update transaction category: {e}")
+        return {"fatal_err": True}
