@@ -6,7 +6,7 @@ def read_statement_from_db() -> str:
         str: JSON data of the bank statement
     """
 
-    print(f"[read_statement_from_db] saving to database...")
+    print(f"[read_statement_from_db] reading from database...")
 
     statement_json = """
     {

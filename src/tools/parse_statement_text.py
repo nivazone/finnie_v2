@@ -1,5 +1,7 @@
 from dependencies import get_llm
 from langchain_core.messages import HumanMessage
+from typing import Any
+import json
 
 def parse_statement_text(text: str) -> str:
     """
@@ -8,14 +10,14 @@ def parse_statement_text(text: str) -> str:
     Extracted fields include:
         - account_holder: Name of the account owner.
         - account_name: Name or label of the account.
-        - start: Statement start date (string format).
-        - end: Statement end date (string format).
+        - start_date: Statement start date (string format).
+        - end_date: Statement end date (string format).
         - opening_balance: Opening balance at start of period.
         - closing_balance: Closing balance at end of period.
         - credit_limit: Credit limit (if applicable).
         - interest_charged: Interest charges for the period.
         - transactions: List of transactions, each with:
-            - date: Transaction date (string).
+            - transaction_date: Transaction date (string).
             - transaction_details: Merchant or description.
             - amount: Transaction amount (positive or negative).
 
@@ -23,7 +25,7 @@ def parse_statement_text(text: str) -> str:
         text: plain text from the bank statement
 
     Returns:
-        str: valid json string
+        str: A valid JSON string containing parsed bank statement data
     """
 
     print(f"[parse_statement_text] parsing extracted text...")
@@ -40,13 +42,13 @@ def parse_statement_text(text: str) -> str:
         Parse the following fields:
             account_holder: name of the account owner,
             account_name: name of the account,
-            start: statement start date,
-            end: statement end date,
+            start_date: statement start date,
+            end_date: statement end date,
             opening_balance: numeric opening balance,
             closing_balance: numeric closing balance,
             credit_limit: numeric credit limit,
             interest_charged: numeric interest charged,
-            transactions: list of date, transaction_details, amount.
+            transactions: list of transaction_date, transaction_details, amount.
 
         Raw text to parse:
         {text}

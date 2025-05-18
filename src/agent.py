@@ -27,7 +27,7 @@ def agent(state: AgentState, llm: ChatOpenAI):
     sys_msg = SystemMessage(content=f"""
         You are a helpful agent named Finnie.
         You can analyse bank statements and run computations with provided tools.
-        Current statement file is {state["input_file"]}
+        Current statement file is {state["input_file"]}.
     """)
     llm_with_tools = llm.bind_tools(TOOLS)
     
