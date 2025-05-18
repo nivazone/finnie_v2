@@ -1,5 +1,5 @@
 from langchain_core.runnables import Runnable
-from langgraph.graph import START, StateGraph
+from langgraph.graph import START, END, StateGraph
 from langchain_core.messages import SystemMessage
 from langchain_openai import ChatOpenAI
 from langgraph.prebuilt import ToolNode, tools_condition
@@ -21,7 +21,31 @@ TOOLS: List[Callable[..., Any]] = [
     write_statement_to_db,
     read_statement_from_db,
     update_transaction_classification,
-    search_web]
+    search_web
+]
+
+def route_tools(state: AgentState):
+    """
+    Use in the conditional_edge to route to the ToolNode.
+    Check if there are fatal errors, if yes, route to END.
+    If not, check if the last message has tool calls.
+    Otherwise, route to the end.
+    """
+
+    if not isinstance(state, list) and state.get("fatal_err") is True:
+        return END
+    
+    if isinstance(state, list):
+        ai_message = state[-1]
+    elif messages := state.get("messages", []):
+        ai_message = messages[-1]
+    else:
+        raise ValueError(f"No messages found in input state to tool_edge: {state}")
+    
+    if hasattr(ai_message, "tool_calls") and len(ai_message.tool_calls) > 0:
+        return "tools"
+    
+    return END
 
 def agent(state: AgentState, llm: ChatOpenAI):
     sys_msg = SystemMessage(content=f"""
@@ -43,12 +67,7 @@ def get_graph(llm: ChatOpenAI) -> Runnable:
     builder.add_node("tools", ToolNode(TOOLS))
 
     builder.add_edge(START, "agent")
-    builder.add_conditional_edges(
-        "agent",
-        # If the latest message requires a tool, route to tools
-        # Otherwise, provide a direct response
-        tools_condition,
-    )
+    builder.add_conditional_edges("agent", route_tools)
     builder.add_edge("tools", "agent")
 
     return builder.compile()

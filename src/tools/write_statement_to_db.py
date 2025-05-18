@@ -1,17 +1,16 @@
-from typing import Any
+from typing import Any, Annotated
+from langgraph.prebuilt import InjectedState
 from datetime import datetime
 from dependencies import get_db_connection
+from state import AgentState
 import json
 
-def write_statement_to_db(json_str: str) -> bool:
+def write_statement_to_db(json_str: str, state: Annotated[AgentState, InjectedState]):
     """
     Writes structured bank statement data and transactions into database.
     
     Args:
         json_str: A valid JSON string containing parsed bank statement data
-
-    Returns:
-        bool: True or False indicating DB write was successful or not.
     """
 
     print(f"[write_statement_to_db] saving to database...")
@@ -72,12 +71,12 @@ def write_statement_to_db(json_str: str) -> bool:
                                 tx['amount']
                             ))
                     conn.commit()
-                    return True
                 
                 except Exception as e:
                     print(f"--- [ERROR] Database operation failed: {e}")
                     conn.rollback()
-                    return False
+                    state["fatal_err"] = True
+    
     except Exception as e:
         print(f"--- [ERROR] Unknown error: {e}")
-        return False
+        state["fatal_err"] = True
