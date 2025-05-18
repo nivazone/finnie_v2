@@ -1,6 +1,6 @@
 from langchain_core.runnables import Runnable
 from langgraph.graph import START, END, StateGraph
-from langchain_core.messages import SystemMessage
+from langchain_core.messages import SystemMessage, ToolMessage
 from langchain_openai import ChatOpenAI
 from langgraph.prebuilt import ToolNode, tools_condition
 from functools import partial
@@ -14,6 +14,7 @@ from tools import (
     update_transaction_classification,
     search_web
 )
+import json
 
 TOOLS: List[Callable[..., Any]] = [
     extract_text,
@@ -32,10 +33,10 @@ def route_tools(state: AgentState):
     Otherwise, route to the end.
     """
 
-    print(f"{state['fatal_err']=}")
-
-    if not isinstance(state, list) and state.get("fatal_err") is True:
-        print("Fatal error, routing to END")
+    print("state.fatal_err):", state.get("fatal_err"))
+    
+    if state.get("fatal_err") is True:
+        print("[route_tools] fatal error detected. Ending execution.")
         return END
     
     if isinstance(state, list):
@@ -55,6 +56,7 @@ def agent(state: AgentState, llm: ChatOpenAI):
         You are a helpful agent named Finnie.
         You can analyse bank statements and run computations with provided tools.
         Current statement file is {state["input_file"]}.
+        Do not explain errors yourself, if a tool operation fails, ensure the corresponding tool sets fatal_err = true so the graph can route correctly.
     """)
     llm_with_tools = llm.bind_tools(TOOLS)
     
@@ -62,15 +64,30 @@ def agent(state: AgentState, llm: ChatOpenAI):
         "messages": [llm_with_tools.invoke([sys_msg] + state["messages"])],
     }
 
+def merge_tool_output(state: AgentState) -> AgentState:
+    last = state["messages"][-1]
+    if isinstance(last, ToolMessage):
+        try:
+            result = json.loads(last.content)
+            if isinstance(result, dict):
+                state.update(result)
+        except Exception:
+            pass
+
+    return state
+
 def get_graph(llm: ChatOpenAI) -> Runnable:
     agent_node = partial(agent, llm=llm)
 
     builder = StateGraph(AgentState)
     builder.add_node("agent", agent_node)
     builder.add_node("tools", ToolNode(TOOLS))
+    builder.add_node("merge_output", merge_tool_output)
 
     builder.add_edge(START, "agent")
     builder.add_conditional_edges("agent", route_tools)
-    builder.add_edge("tools", "agent")
+
+    builder.add_edge("tools", "merge_output")
+    builder.add_edge("merge_output", "agent")
 
     return builder.compile()

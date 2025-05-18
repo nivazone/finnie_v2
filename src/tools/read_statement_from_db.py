@@ -53,6 +53,8 @@ def read_statement_from_db() -> dict:
                 
                 rows = cur.fetchall()
 
+                print("row count:", len(rows))
+
                 if not rows:
                     return json.dumps({})
 
