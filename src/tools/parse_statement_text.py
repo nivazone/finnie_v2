@@ -1,9 +1,9 @@
-from dependencies import get_llm
+from dependencies import get_text_parser_llm
 from langchain_core.messages import HumanMessage
 from typing import Any
 import json
 
-def parse_statement_text(text: str) -> str:
+def parse_statement_text(text: str) -> dict:
     """
     Parses raw bank statement text into structured account and transaction data.
 
@@ -26,11 +26,13 @@ def parse_statement_text(text: str) -> str:
 
     Returns:
         str: A valid JSON string containing parsed bank statement data
+    Returns:
+        dict: {"parsed_text": "...", "fatal_err": False} or {"fatal_err": True}
     """
 
     print(f"[parse_statement_text] parsing extracted text...")
 
-    llm = get_llm()
+    llm = get_text_parser_llm()
     prompt = f"""
         You are a bank statement parser.
         
@@ -55,4 +57,6 @@ def parse_statement_text(text: str) -> str:
         """
     response = llm.invoke([HumanMessage(content=prompt)])
 
-    return response.content.strip()
+    return {
+        "parsed_text": response.content.strip(),
+    }

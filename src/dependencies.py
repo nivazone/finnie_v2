@@ -12,6 +12,18 @@ def get_llm() -> ChatOpenAI:
         api_key=s.OPENAI_API_KEY,
     )
 
+def get_text_parser_llm() -> ChatOpenAI:
+    s = get_settings()
+
+    return ChatOpenAI(
+        model=s.PARSER_MODEL_NAME,
+        base_url=s.OPENAI_BASE_URL,
+        api_key=s.OPENAI_API_KEY,
+        model_kwargs={
+            "response_format": {"type": "json_object"}
+        },
+    )
+
 def get_db_connection() -> Connection:
     s = get_settings()
 

@@ -10,12 +10,12 @@ from state import AgentState
 def _to_float(value):
     return float(value) if isinstance(value, Decimal) else value
 
-def read_statement_from_db(state: Annotated[AgentState, InjectedState]) -> str:
+def read_statement_from_db() -> dict:
     """
     Reads statement from database
 
     Returns:
-        str: JSON data of the bank statement
+        dict: {"statement_json": "...", "fatal_err": False} or {"fatal_err": True}
     """
 
     print(f"[read_statement_from_db] reading from database...")
@@ -77,9 +77,13 @@ def read_statement_from_db(state: Annotated[AgentState, InjectedState]) -> str:
                     }
                 }
 
-                return json.dumps(statement_data)
+                return {
+                    "statement_json": json.dumps(statement_data),
+                }
 
     except Exception as e:
         print(f"[ERROR] Failed to read from database: {str(e)}")
-        state["fatal_err"] = True
-        return json.dumps({})
+        return {
+            "statement_json": json.dumps({}),
+            "fatal_err": True
+        }

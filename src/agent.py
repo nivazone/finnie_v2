@@ -32,7 +32,10 @@ def route_tools(state: AgentState):
     Otherwise, route to the end.
     """
 
+    print(f"{state['fatal_err']=}")
+
     if not isinstance(state, list) and state.get("fatal_err") is True:
+        print("Fatal error, routing to END")
         return END
     
     if isinstance(state, list):

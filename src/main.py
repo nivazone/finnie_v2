@@ -25,9 +25,10 @@ if __name__ == "__main__":
             1. get plain text version of the statement.
             2. parse the plain text so that you can get JSON version.
             3. save statement JSON to database for future use.
-            4. get transactions from the database and classify the transactions.
-            5. save the transaction classification to database.
-        
+            4. get all transactions from the database for the statement.
+            5. classify the transactions by using web search to gather more data.
+            6. update the transaction classification in database.
+                             
         Important:
         - You must do a web search to get more details about the transaction decription before attempting to classify.
         - Following are the categories, only use these categories for classifying transactions.
@@ -40,7 +41,6 @@ if __name__ == "__main__":
             - Healthcare
             - Dining
             - Vet
-            - Unknown
         """
     )]
     

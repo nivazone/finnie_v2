@@ -5,7 +5,7 @@ from langgraph.prebuilt import InjectedState
 from typing import Annotated
 from state import AgentState
 
-def search_web(query: str, state: Annotated[AgentState, InjectedState]) -> dict:
+def search_web(query: str) -> dict:
     """
     Search for general web results.
 
@@ -17,7 +17,7 @@ def search_web(query: str, state: Annotated[AgentState, InjectedState]) -> dict:
         query: query string for the search engine
 
     Returns:
-        dict: search results
+        dict: {"search_results": "...", "fatal_err": False} or {"fatal_err": True}
     """
 
     print(f"[search_web] searching web, {query=}")
@@ -25,9 +25,13 @@ def search_web(query: str, state: Annotated[AgentState, InjectedState]) -> dict:
     try:     
         client = get_search_client()
         result = client.invoke({"query": query})
-
-        return cast(dict[str, Any], result)
+    
+        return {
+            "search_results": result,
+        }
     except Exception as e:
         print(f"--- [ERROR] Unknown error: {e}")
-        state["fatal_err"] = True
-        return {}
+        return {
+            "search_results": {},
+            "fatal_err": True
+        }
