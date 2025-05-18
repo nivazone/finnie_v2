@@ -46,7 +46,8 @@ if __name__ == "__main__":
     
     response = finnie.invoke({
         "messages": messages,
-        "input_file": "statements/april-2025.pdf"
+        "input_file": "statements/april-2025.pdf",
+        "fatal_err": False,
     })
 
     print(print(response['messages'][-1].content))

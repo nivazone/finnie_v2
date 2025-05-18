@@ -1,8 +1,11 @@
 from langchain_tavily import TavilySearch
 from typing import cast, Any
 from dependencies import get_search_client
+from langgraph.prebuilt import InjectedState
+from typing import Annotated
+from state import AgentState
 
-def search_web(query: str) -> dict:
+def search_web(query: str, state: Annotated[AgentState, InjectedState]) -> dict:
     """
     Search for general web results.
 
@@ -26,4 +29,5 @@ def search_web(query: str) -> dict:
         return cast(dict[str, Any], result)
     except Exception as e:
         print(f"--- [ERROR] Unknown error: {e}")
-        return False
+        state["fatal_err"] = True
+        return {}
