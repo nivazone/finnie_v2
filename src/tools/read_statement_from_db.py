@@ -72,8 +72,6 @@ def read_statement_from_db() -> str:
                     }
                 }
 
-                print("read from db:", statement_data)
-
                 return json.dumps(statement_data)
 
     except Exception as e:

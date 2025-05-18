@@ -1,5 +1,6 @@
 from langchain_tavily import TavilySearch
 from typing import cast, Any
+from dependencies import get_search_client
 
 def search_web(query: str) -> dict:
     """
@@ -16,9 +17,13 @@ def search_web(query: str) -> dict:
         dict: search results
     """
 
-    print(f"[search_web] searching web...")
+    print(f"[search_web] searching web, {query=}")
 
-    client = TavilySearch(max_results=3)
-    result = client.invoke({"query": query})
+    try:     
+        client = get_search_client()
+        result = client.invoke({"query": query})
 
-    return cast(dict[str, Any], result)
+        return cast(dict[str, Any], result)
+    except Exception as e:
+        print(f"--- [ERROR] Unknown error: {e}")
+        return False
