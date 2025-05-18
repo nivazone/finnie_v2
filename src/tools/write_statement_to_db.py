@@ -23,17 +23,6 @@ def write_statement_to_db(json_str: str) -> bool:
         with conn:
             with conn.cursor() as cur:
                 try:
-                    print("statement:",
-                            parsed_data["account_holder"],
-                            parsed_data["account_name"],
-                            parsed_data["start_date"],
-                            parsed_data["end_date"],
-                            parsed_data["opening_balance"],
-                            parsed_data["closing_balance"],
-                            parsed_data["credit_limit"],
-                            parsed_data["interest_charged"]
-                        )
-
                     cur.execute("""
                         INSERT INTO statements 
                             (
@@ -66,12 +55,6 @@ def write_statement_to_db(json_str: str) -> bool:
                     statement_id = cur.fetchone()[0]
 
                     for tx in parsed_data["transactions"]:
-                        print("transactions:", 
-                            statement_id,
-                            tx['transaction_date'],
-                            tx['transaction_details'],
-                            tx['amount'])
-                        
                         cur.execute("""
                             INSERT INTO transactions 
                                 (
