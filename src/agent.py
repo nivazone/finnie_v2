@@ -49,16 +49,17 @@ def route_tools(state: AgentState):
     
     return END
 
-def agent(state: AgentState, llm: ChatOpenAI):
+async def agent(state: AgentState, llm: ChatOpenAI):
     sys_msg = SystemMessage(content=f"""
         You are a helpful agent named Finnie.
         You can analyse bank statements and run computations with provided tools.
         Current statement file is {state["input_file"]}.
     """)
     llm_with_tools = llm.bind_tools(TOOLS)
+    response = await llm_with_tools.ainvoke([sys_msg] + state["messages"])
     
     return {
-        "messages": [llm_with_tools.invoke([sys_msg] + state["messages"])],
+        "messages": [response]
     }
 
 def merge_tool_output(state: AgentState) -> AgentState:

@@ -1,6 +1,6 @@
 from dependencies import get_text_parser_llm
 from typing import List
-from typing import Optional
+import asyncio
 from pydantic import BaseModel, Field
 
 class Transaction(BaseModel):
@@ -23,7 +23,7 @@ class BankStatement(BaseModel):
     interest_charged: float = Field(description="Interest charges for the period")
     transactions: List[Transaction] = Field(description="List of transactions")
 
-def parse_statement_text(text: str) -> dict:
+async def parse_statement_text(text: str) -> dict:
     """
     Parses raw bank statement text into structured account and transaction data.
 
@@ -36,9 +36,14 @@ def parse_statement_text(text: str) -> dict:
 
     print(f"[parse_statement_text] parsing extracted text...")
 
-    llm = get_text_parser_llm().with_structured_output(BankStatement)
-    response = llm.invoke("Parse this bank statement text:\n" + text)
+    try:
+        llm = get_text_parser_llm().with_structured_output(BankStatement)
+        response = await llm.ainvoke("Parse this bank statement text:\n" + text)
 
-    return {
-        "parsed_text": response.dict(),
-    }
+        return {
+            "parsed_text": response.dict(),
+        }
+    
+    except Exception as e:
+        print(f"[ERROR] Failed to parse text: {e}")
+        return {"fatal_err": True}

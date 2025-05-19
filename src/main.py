@@ -1,19 +1,14 @@
 from dotenv import load_dotenv
+import asyncio
 import logging
-from langchain_openai import ChatOpenAI
-from langchain_core.messages import AnyMessage, SystemMessage, HumanMessage
-
-
+from langchain_core.messages import HumanMessage
 from IPython.display import Image, display
-
 from PIL import Image as PILImage
-from io import BytesIO
 from langchain_core.runnables.graph_mermaid import MermaidDrawMethod
-from config import get_settings
 from agent import get_graph
 from dependencies import get_llm
 
-if __name__ == "__main__":
+async def main():
     logging.getLogger("pdfminer").setLevel(logging.ERROR)
     load_dotenv()
     
@@ -31,7 +26,7 @@ if __name__ == "__main__":
         """
     )]
     
-    response = finnie.invoke({
+    response = await finnie.ainvoke({
         "messages": messages,
         "input_file": "statements/april-2025.pdf",
         "fatal_err": False,
@@ -43,3 +38,6 @@ if __name__ == "__main__":
     #     draw_method=MermaidDrawMethod.PYPPETEER
     # )
     # PILImage.open(BytesIO(png_bytes)).show()
+
+if __name__ == "__main__":
+    asyncio.run(main())

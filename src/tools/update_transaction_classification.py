@@ -1,8 +1,9 @@
 from dependencies import get_db_connection
 from langchain_core.tools import tool
+import asyncio
 
 @tool
-def update_transaction_classification(transaction_id: int, category: str) -> dict:
+async def update_transaction_classification(transaction_id: int, category: str) -> dict:
     """
     Updates the category of a transaction for a given transaction id.
 
@@ -16,20 +17,23 @@ def update_transaction_classification(transaction_id: int, category: str) -> dic
 
     print(f"[update_transaction_classification] setting category to '{category}'")
 
-    try:
-        conn = get_db_connection()
-        with conn:
-            with conn.cursor() as cur:
-                
-                cur.execute("""
-                    UPDATE transactions
-                    SET category = %s
-                    WHERE id = %s;
-                """, (category, transaction_id))
+    def run_query():
+        try:
+            conn = get_db_connection()
+            with conn:
+                with conn.cursor() as cur:
+                    
+                    cur.execute("""
+                        UPDATE transactions
+                        SET category = %s
+                        WHERE id = %s;
+                    """, (category, transaction_id))
 
-                conn.commit()
-                return {"fatal_err": False}
+                    conn.commit()
+                    return {"fatal_err": False}
 
-    except Exception as e:
-        print(f"[ERROR] Failed to update transaction category: {e}")
-        return {"fatal_err": True}
+        except Exception as e:
+            print(f"[ERROR] Failed to update transaction category: {e}")
+            return {"fatal_err": True}
+        
+    return await asyncio.to_thread(run_query)
