@@ -31,8 +31,6 @@ def parse_statement_text(text: str) -> dict:
         text: plain text from the bank statement
 
     Returns:
-        str: A valid JSON string containing parsed bank statement data
-    Returns:
         dict: {"parsed_text": "...", "fatal_err": False} or {"fatal_err": True}
     """
 

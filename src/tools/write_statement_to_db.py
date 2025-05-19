@@ -78,5 +78,5 @@ def write_statement_to_db(json_str: str) -> dict:
                     return {"fatal_err": True}
     
     except Exception as e:
-        print(f"--- [ERROR] Unknown error: {e}")
+        print(f"--- [ERROR] Unknown error: {e}, {json_str=}")
         return {"fatal_err": True}

@@ -1,11 +1,7 @@
 from dependencies import get_db_connection
 import json
-from datetime import datetime
 from decimal import Decimal
 from psycopg.rows import dict_row
-from langgraph.prebuilt import InjectedState
-from typing import Annotated
-from state import AgentState
 
 def _to_float(value):
     return float(value) if isinstance(value, Decimal) else value
@@ -52,8 +48,6 @@ def read_statement_from_db() -> dict:
                 """)
                 
                 rows = cur.fetchall()
-
-                print("row count:", len(rows))
 
                 if not rows:
                     return json.dumps({})

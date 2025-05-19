@@ -12,7 +12,7 @@ from tools import (
     write_statement_to_db,
     read_statement_from_db,
     update_transaction_classification,
-    search_web
+    classify_transactions
 )
 import json
 
@@ -22,7 +22,7 @@ TOOLS: List[Callable[..., Any]] = [
     write_statement_to_db,
     read_statement_from_db,
     update_transaction_classification,
-    search_web
+    classify_transactions
 ]
 
 def route_tools(state: AgentState):
