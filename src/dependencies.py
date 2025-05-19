@@ -1,6 +1,7 @@
 from langchain_openai import ChatOpenAI
 from psycopg import connect, Connection
 from langchain_tavily import TavilySearch
+from typing import Optional, Any
 from config import get_settings
 
 def get_llm() -> ChatOpenAI:
@@ -10,6 +11,16 @@ def get_llm() -> ChatOpenAI:
         model=s.MODEL_NAME,
         base_url=s.OPENAI_BASE_URL,
         api_key=s.OPENAI_API_KEY,
+    )
+
+def get_text_parser_llm(model_kwargs: Optional[dict[str, Any]] = None) -> ChatOpenAI:
+    s = get_settings()
+
+    return ChatOpenAI(
+        model=s.PARSER_MODEL_NAME,
+        base_url=s.OPENAI_BASE_URL,
+        api_key=s.OPENAI_API_KEY,
+        model_kwargs=model_kwargs or {},
     )
 
 def get_db_connection() -> Connection:

@@ -1,6 +1,8 @@
 import pdfplumber
+from langchain_core.tools import tool
 
-def extract_text(path: str) -> str:
+@tool
+def extract_text(path: str) -> dict:
     """
     Extracts the full textual content and tabular data from a PDF file.
 
@@ -8,7 +10,7 @@ def extract_text(path: str) -> str:
         path: path to the bank statement
 
     Returns:
-        str: extracted text from the bank statement
+        dict: {"extracted_text": "...", "fatal_err": False} or {"fatal_err": True}
     """
 
     print(f"[extract_text] extracting text from {path}...")
@@ -26,4 +28,6 @@ def extract_text(path: str) -> str:
                     for row in table:
                         output += " | ".join(str(cell) for cell in row) + "\n"
 
-    return output.strip()
+    return {
+        "extracted_text": output.strip(),
+    }

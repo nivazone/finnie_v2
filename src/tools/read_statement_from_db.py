@@ -10,12 +10,12 @@ from state import AgentState
 def _to_float(value):
     return float(value) if isinstance(value, Decimal) else value
 
-def read_statement_from_db(state: Annotated[AgentState, InjectedState]) -> str:
+def read_statement_from_db() -> dict:
     """
     Reads statement from database
 
     Returns:
-        str: JSON data of the bank statement
+        dict: {"statement_json": "...", "fatal_err": False} or {"fatal_err": True}
     """
 
     print(f"[read_statement_from_db] reading from database...")
@@ -37,13 +37,14 @@ def read_statement_from_db(state: Annotated[AgentState, InjectedState]) -> str:
                         s.closing_balance,
                         s.credit_limit,
                         s.interest_charged,
+                        t.id as transaction_id,
                         t.transaction_date,
                         t.transaction_details,
                         t.amount
                     FROM statements s
                     LEFT JOIN transactions t ON t.statement_id = s.id
                     WHERE s.id = (
-                        SELECT id 
+                        SELECT id
                         FROM statements 
                         ORDER BY end_date DESC 
                         LIMIT 1
@@ -51,6 +52,8 @@ def read_statement_from_db(state: Annotated[AgentState, InjectedState]) -> str:
                 """)
                 
                 rows = cur.fetchall()
+
+                print("row count:", len(rows))
 
                 if not rows:
                     return json.dumps({})
@@ -61,6 +64,7 @@ def read_statement_from_db(state: Annotated[AgentState, InjectedState]) -> str:
                 # Format dates as strings
                 statement_data = {
                     "bank_statement": {
+                        "statement_id": statement["statement_id"],
                         "account_name": statement["account_name"],
                         "opening_balance": _to_float(statement["opening_balance"]),
                         "closing_balance": _to_float(statement["closing_balance"]),
@@ -68,6 +72,7 @@ def read_statement_from_db(state: Annotated[AgentState, InjectedState]) -> str:
                         "end_date": statement["end_date"],
                         "transactions": [
                             {
+                                "transaction_id": row["transaction_id"],
                                 "transaction_date": row["transaction_date"],
                                 "description": row["transaction_details"],
                                 "amount": _to_float(row["amount"])
@@ -77,9 +82,13 @@ def read_statement_from_db(state: Annotated[AgentState, InjectedState]) -> str:
                     }
                 }
 
-                return json.dumps(statement_data)
+                return {
+                    "statement_json": json.dumps(statement_data),
+                }
 
     except Exception as e:
         print(f"[ERROR] Failed to read from database: {str(e)}")
-        state["fatal_err"] = True
-        return json.dumps({})
+        return {
+            "statement_json": json.dumps({}),
+            "fatal_err": True
+        }
