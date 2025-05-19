@@ -32,8 +32,6 @@ def route_tools(state: AgentState):
     If not, check if the last message has tool calls.
     Otherwise, route to the end.
     """
-
-    print("state.fatal_err):", state.get("fatal_err"))
     
     if state.get("fatal_err") is True:
         print("[route_tools] fatal error detected. Ending execution.")
@@ -56,7 +54,6 @@ def agent(state: AgentState, llm: ChatOpenAI):
         You are a helpful agent named Finnie.
         You can analyse bank statements and run computations with provided tools.
         Current statement file is {state["input_file"]}.
-        Do not explain errors yourself, if a tool operation fails, ensure the corresponding tool sets fatal_err = true so the graph can route correctly.
     """)
     llm_with_tools = llm.bind_tools(TOOLS)
     
