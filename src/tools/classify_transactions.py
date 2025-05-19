@@ -2,6 +2,7 @@ from langchain_core.tools import tool
 from pydantic import BaseModel, Field
 from typing import List
 from dependencies import get_transaction_classifier_llm, get_search_client
+import asyncio
 
 class Transaction(BaseModel):
     """Input model for a single transaction to classify."""
@@ -24,11 +25,8 @@ class TransactionClassifications(BaseModel):
     """Container for a list of transaction classifications."""
     results: List[TransactionClassification]
 
-
-# ========== Tool Function ==========
-
 @tool
-def classify_transactions(input: Transactions) -> dict:
+async def classify_transactions(input: Transactions) -> dict:
     """
     Classifies a list of bank transactions into categories using web context and an LLM.
 
@@ -45,17 +43,17 @@ def classify_transactions(input: Transactions) -> dict:
         llm = get_transaction_classifier_llm().with_structured_output(TransactionClassifications)
         search_client = get_search_client()
 
-        # Step 1: Perform all web searches
-        enriched_inputs = []
-
-        for tx in input.transactions:
-            results = search_client.invoke({"query": tx.description}).get("results", [])
-            web_context = "\n".join(f"- {r.get('title', '')}: {r.get('content', '')}" for r in results)
-            enriched_inputs.append({
+        # Step 1: Perform all web searches concurrently
+        async def fetch_context(tx: Transaction):
+            results = await search_client.ainvoke({"query": tx.description})
+            web_context = "\n".join(f"- {r.get('title', '')}: {r.get('content', '')}" for r in results.get("results", []))
+            return {
                 "transaction_id": tx.transaction_id,
                 "description": tx.description,
                 "web_context": web_context
-            })
+            }
+
+        enriched_inputs = await asyncio.gather(*[fetch_context(tx) for tx in input.transactions])
 
         # Step 2: Build LLM prompt
         prompt = """
