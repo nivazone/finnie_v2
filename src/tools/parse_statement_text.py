@@ -40,7 +40,7 @@ async def parse_statement_text(text: str) -> dict:
         response = await llm.ainvoke("Parse this bank statement text:\n" + text)
 
         return {
-            "parsed_text": response.dict(),
+            "parsed_text": response,
         }
     
     except Exception as e:
