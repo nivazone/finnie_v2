@@ -15,6 +15,7 @@ from tools import (
     classify_transactions
 )
 import json
+from logger import log
 
 TOOLS: List[Callable[..., Any]] = [
     extract_text,
@@ -34,7 +35,7 @@ def route_tools(state: AgentState):
     """
     
     if state.get("fatal_err") is True:
-        print("[route_tools] fatal error detected. Ending execution.")
+        log.info("[route_tools] fatal error detected. Ending execution.")
         return END
     
     if isinstance(state, list):

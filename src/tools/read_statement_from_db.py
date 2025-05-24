@@ -2,6 +2,7 @@ from dependencies import get_db_pool
 import json
 from decimal import Decimal
 from psycopg.rows import dict_row
+from logger import log
 
 def _to_float(value):
     return float(value) if isinstance(value, Decimal) else value
@@ -14,7 +15,7 @@ async def read_statement_from_db() -> dict:
         dict: {"statement_json": "...", "fatal_err": False} or {"fatal_err": True}
     """
 
-    print(f"[read_statement_from_db] reading from database...")
+    log.info(f"[read_statement_from_db] reading from database...")
 
     try:
         pool = get_db_pool()
@@ -80,7 +81,7 @@ async def read_statement_from_db() -> dict:
                 }
 
     except Exception as e:
-        print(f"[ERROR] Failed to read from database: {str(e)}")
+        log.error(f"Failed to read from database: {str(e)}")
         return {
             "statement_json": json.dumps({}),
             "fatal_err": True

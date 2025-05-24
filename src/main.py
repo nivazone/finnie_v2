@@ -7,6 +7,7 @@ from PIL import Image as PILImage
 # from langchain_core.runnables.graph_mermaid import MermaidDrawMethod
 from agent import get_graph
 from dependencies import get_llm, init_db_pool
+from logger import log
 
 async def main():
     try:
@@ -34,7 +35,7 @@ async def main():
             "fatal_err": False,
         })
 
-        print(print(response['messages'][-1].content))
+        log.info(response['messages'][-1].content)
 
         # png_bytes = finnie.get_graph(xray=True).draw_mermaid_png(
         #     draw_method=MermaidDrawMethod.PYPPETEER
