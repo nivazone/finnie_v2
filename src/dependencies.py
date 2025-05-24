@@ -1,38 +1,41 @@
 from langchain_openai import ChatOpenAI
-from psycopg import connect, Connection
 from langchain_tavily import TavilySearch
-from typing import Optional, Any
+from pydantic import SecretStr
 from config import get_settings
 from functools import lru_cache
 from psycopg_pool import AsyncConnectionPool
 
+@lru_cache(maxsize=1)
 def get_llm() -> ChatOpenAI:
     s = get_settings()
 
     return ChatOpenAI(
         model=s.MODEL_NAME,
         base_url=s.OPENAI_BASE_URL,
-        api_key=s.OPENAI_API_KEY,
+        api_key=SecretStr(s.OPENAI_API_KEY) if s.OPENAI_API_KEY is not None else None,
     )
 
+@lru_cache(maxsize=1)
 def get_text_parser_llm() -> ChatOpenAI:
     s = get_settings()
 
     return ChatOpenAI(
         model=s.PARSER_MODEL_NAME,
         base_url=s.OPENAI_BASE_URL,
-        api_key=s.OPENAI_API_KEY,
+        api_key=SecretStr(s.OPENAI_API_KEY) if s.OPENAI_API_KEY is not None else None,
     )
 
+@lru_cache(maxsize=1)
 def get_transaction_classifier_llm() -> ChatOpenAI:
     s = get_settings()
 
     return ChatOpenAI(
         model=s.PARSER_MODEL_NAME,
         base_url=s.OPENAI_BASE_URL,
-        api_key=s.OPENAI_API_KEY,
+        api_key=SecretStr(s.OPENAI_API_KEY) if s.OPENAI_API_KEY is not None else None,
     )
 
+@lru_cache(maxsize=1)
 def get_search_client() -> TavilySearch:
     client = TavilySearch(max_results=3)
     return client
