@@ -3,6 +3,9 @@ from pydantic import BaseModel, Field
 from typing import List
 from dependencies import get_transaction_classifier_llm, get_search_client
 import asyncio
+from math import ceil
+
+BATCH_SIZE = 10
 
 class Transaction(BaseModel):
     """Input model for a single transaction to classify."""
@@ -34,7 +37,7 @@ async def classify_transactions(input: Transactions) -> dict:
         input (Transactions): Contains a list of transactions with id and description.
 
     Returns:
-        dict: {"parsed_text": ..., "fatal_err": False} on success,
+        dict: {"classifications": ..., "fatal_err": False} on success,
               {"fatal_err": True} on failure.
     """
     print(f"[classify_transactions] classifying {len(input.transactions)} transactions...")
@@ -43,39 +46,41 @@ async def classify_transactions(input: Transactions) -> dict:
         llm = get_transaction_classifier_llm().with_structured_output(TransactionClassifications)
         search_client = get_search_client()
 
-        # Step 1: Perform all web searches concurrently
-        async def fetch_context(tx: Transaction):
-            results = await search_client.ainvoke({"query": tx.description})
-            web_context = "\n".join(f"- {r.get('title', '')}: {r.get('content', '')}" for r in results.get("results", []))
-            return {
-                "transaction_id": tx.transaction_id,
-                "description": tx.description,
-                "web_context": web_context
-            }
+        batches = [input.transactions[i:i + BATCH_SIZE] for i in range(0, len(input.transactions), BATCH_SIZE)]
+        all_results = []
 
-        enriched_inputs = await asyncio.gather(*[fetch_context(tx) for tx in input.transactions])
+        for batch in batches:
+            async def fetch_context(tx: Transaction):
+                results = await search_client.ainvoke({"query": tx.description})
+                web_context = "\n".join(f"- {r.get('title', '')}: {r.get('content', '')}" for r in results.get("results", []))
+                return {
+                    "transaction_id": tx.transaction_id,
+                    "description": tx.description,
+                    "web_context": web_context
+                }
 
-        # Step 2: Build LLM prompt
-        prompt = """
-            Classify each transaction into one of the following categories:
-            - Groceries, Transport, Utilities, Insurance, Entertainment, Subscriptions, Healthcare, Dining, Vet, Unknown
+            enriched = await asyncio.gather(*[fetch_context(tx) for tx in batch])
 
-            For each transaction, respond with: transaction_id and classification.
-            """
+            prompt = """
+                Classify each transaction into one of the following categories:
+                - Groceries, Transport, Utilities, Insurance, Entertainment, Subscriptions, Healthcare, Dining, Vet, Unknown
 
-        for entry in enriched_inputs:
-            prompt += f"""
-                ---
-                Transaction id: {entry["transaction_id"]}
-                Description: {entry["description"]}
-                Web context: {entry["web_context"]}
+                For each transaction, respond with: transaction_id and classification.
                 """
 
-        # Step 3: Invoke LLM and return response
-        response = llm.invoke(prompt)
+            for entry in enriched:
+                prompt += f"""
+                    ---
+                    Transaction id: {entry["transaction_id"]}
+                    Description: {entry["description"]}
+                    Web context: {entry["web_context"]}
+                """
+
+            result = await llm.ainvoke(prompt)
+            all_results.extend(result.results)
 
         return {
-            "parsed_text": response.dict(),
+            "classifications": TransactionClassifications(results=all_results).dict(),
             "fatal_err": False
         }
 
