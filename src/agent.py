@@ -2,12 +2,12 @@ from langchain_core.runnables import Runnable
 from langgraph.graph import START, END, StateGraph
 from langchain_core.messages import SystemMessage, ToolMessage, AIMessage
 from langchain_openai import ChatOpenAI
-from langgraph.prebuilt import ToolNode, tools_condition
+from langgraph.prebuilt import ToolNode
 from functools import partial
 from typing import Any, Callable, List
 from state import AgentState
 from tools import (
-    extract_text,
+    extract_all_texts,
     parse_statement_text,
     write_statement_to_db,
     read_statement_from_db,
@@ -18,7 +18,7 @@ import json
 from logger import log
 
 TOOLS: List[Callable[..., Any]] = [
-    extract_text,
+    extract_all_texts,
     parse_statement_text,
     write_statement_to_db,
     read_statement_from_db,
@@ -54,7 +54,7 @@ async def agent(state: AgentState, llm: ChatOpenAI):
     sys_msg = SystemMessage(content=f"""
         You are a helpful agent named Finnie.
         You can analyse bank statements and run computations with provided tools.
-        Current statement file is {state["input_file"]}.
+        Statements are located at {state["input_folder"]}.
     """)
     llm_with_tools = llm.bind_tools(TOOLS)
     response = await llm_with_tools.ainvoke([sys_msg] + state["messages"])

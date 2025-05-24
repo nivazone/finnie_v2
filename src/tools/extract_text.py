@@ -1,8 +1,8 @@
 import pdfplumber
 from langchain_core.tools import tool
 from logger import log
+import os
 
-@tool
 def extract_text(path: str) -> dict:
     """
     Extracts the full textual content and tabular data from a PDF file.
@@ -32,3 +32,42 @@ def extract_text(path: str) -> dict:
     return {
         "extracted_text": output.strip(),
     }
+
+@tool
+def extract_all_texts(folder_path: str) -> dict:
+    """
+    Iterates over all PDF files in a folder and extracts their content using extract_text.
+
+    Args:
+        folder_path (str): Path to folder containing PDF files.
+
+    Returns:
+        dict: {
+            "batches": [
+                {"filename": "abc.pdf", "content": "..."},
+                {"filename": "xyz.pdf", "content": "..."}
+            ]
+        }
+    """
+
+    log.info(f"[extract_all_texts] going through {folder_path}...")
+
+    batches = []
+    
+    try:
+        for filename in sorted(os.listdir(folder_path)):
+            if filename.lower().endswith(".pdf"):
+                full_path = os.path.join(folder_path, filename)
+                result = extract_text(full_path)
+                content = result.get("extracted_text")
+
+                batches.append({
+                    "filename": filename,
+                    "content": content
+                })
+
+        return {"batches": batches}
+
+    except Exception as e:
+        log.error(f"[extract_all_texts_from_folder] Fatal error: {e}")
+        return {"fatal_err": True}

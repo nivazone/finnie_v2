@@ -2,6 +2,7 @@ from dependencies import get_text_parser_llm
 from typing import List
 from pydantic import BaseModel, Field
 from logger import log
+
 class Transaction(BaseModel):
     """A single transaction in the bank statement."""
 

@@ -3,6 +3,7 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
 class Settings(BaseSettings):
+    INPUT_FOLDER: str | None = None
     MODEL_NAME: str = "gpt-4o"
     PARSER_MODEL_NAME: str = "gpt-4.1"
     CLASSIFIER_MODEL_NAME: str = "gpt-4o"
