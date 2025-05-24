@@ -1,6 +1,6 @@
 from langchain_core.runnables import Runnable
 from langgraph.graph import START, END, StateGraph
-from langchain_core.messages import SystemMessage, ToolMessage
+from langchain_core.messages import SystemMessage, ToolMessage, AIMessage
 from langchain_openai import ChatOpenAI
 from langgraph.prebuilt import ToolNode, tools_condition
 from functools import partial
@@ -45,7 +45,7 @@ def route_tools(state: AgentState):
     else:
         raise ValueError(f"No messages found in input state to tool_edge: {state}")
     
-    if hasattr(ai_message, "tool_calls") and len(ai_message.tool_calls) > 0:
+    if isinstance(ai_message, AIMessage) and getattr(ai_message, "tool_calls", None):
         return "tools"
     
     return END

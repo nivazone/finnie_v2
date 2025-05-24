@@ -77,7 +77,14 @@ async def classify_transactions(input: Transactions) -> dict:
                 """
 
             result = await llm.ainvoke(prompt)
-            all_results.extend(result.results)
+            
+
+            if isinstance(result, dict):
+                batch_results = result.get("results", [])
+            else:
+                batch_results = result.results
+            
+            all_results.extend(batch_results)
 
         return {
             "classifications": TransactionClassifications(results=all_results).dict(),
