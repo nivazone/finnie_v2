@@ -1,6 +1,5 @@
-from dependencies import get_db_connection
+from dependencies import get_db_pool
 from langchain_core.tools import tool
-import asyncio
 
 @tool
 async def update_transaction_classification(transaction_id: int, category: str) -> dict:
@@ -17,23 +16,21 @@ async def update_transaction_classification(transaction_id: int, category: str) 
 
     print(f"[update_transaction_classification] setting category to '{category}'")
 
-    def run_query():
-        try:
-            conn = get_db_connection()
-            with conn:
-                with conn.cursor() as cur:
-                    
-                    cur.execute("""
-                        UPDATE transactions
-                        SET category = %s
-                        WHERE id = %s;
-                    """, (category, transaction_id))
+    try:
+        pool = get_db_pool()
+        async with pool.connection() as conn:
+            async with conn.cursor() as cur:
+                await cur.execute("""
+                    UPDATE transactions
+                    SET category = %s
+                    WHERE id = %s;
+                """, (category, transaction_id))
 
-                    conn.commit()
-                    return {"fatal_err": False}
+                # Commit is still required for write ops in psycopg3
+                await conn.commit()
 
-        except Exception as e:
-            print(f"[ERROR] Failed to update transaction category: {e}")
-            return {"fatal_err": True}
-        
-    return await asyncio.to_thread(run_query)
+        return {"fatal_err": False}
+
+    except Exception as e:
+        print(f"[ERROR] Failed to update transaction category: {e}")
+        return {"fatal_err": True}
