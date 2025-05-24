@@ -55,6 +55,9 @@ async def read_statement_from_db() -> dict:
                     }
 
                 statement = rows[0]
+
+                log.info(f"Read {len(rows)} transactions")
+                
                 statement_data = {
                     "bank_statement": {
                         "statement_id": statement["statement_id"],
