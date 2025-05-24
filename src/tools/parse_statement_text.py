@@ -1,8 +1,7 @@
 from dependencies import get_text_parser_llm
 from typing import List
-import asyncio
 from pydantic import BaseModel, Field
-
+from logger import log
 class Transaction(BaseModel):
     """A single transaction in the bank statement."""
 
@@ -34,7 +33,7 @@ async def parse_statement_text(text: str) -> dict:
         dict: {"parsed_text": "...", "fatal_err": False} or {"fatal_err": True}
     """
 
-    print(f"[parse_statement_text] parsing extracted text...")
+    log.info(f"[parse_statement_text] parsing extracted text...")
 
     try:
         llm = get_text_parser_llm().with_structured_output(BankStatement)
@@ -45,5 +44,5 @@ async def parse_statement_text(text: str) -> dict:
         }
     
     except Exception as e:
-        print(f"[ERROR] Failed to parse text: {e}")
+        log.error(f"Failed to parse text: {e}")
         return {"fatal_err": True}

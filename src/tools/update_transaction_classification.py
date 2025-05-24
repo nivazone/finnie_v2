@@ -1,5 +1,6 @@
 from dependencies import get_db_pool
 from langchain_core.tools import tool
+from logger import log
 
 @tool
 async def update_transaction_classification(transaction_id: int, category: str) -> dict:
@@ -14,7 +15,7 @@ async def update_transaction_classification(transaction_id: int, category: str) 
         dict: {"fatal_err": False} on success, {"fatal_err": True} on failure
     """
 
-    print(f"[update_transaction_classification] setting category to '{category}'")
+    log.info(f"[update_transaction_classification] setting category to '{category}'")
 
     try:
         pool = get_db_pool()
@@ -26,11 +27,10 @@ async def update_transaction_classification(transaction_id: int, category: str) 
                     WHERE id = %s;
                 """, (category, transaction_id))
 
-                # Commit is still required for write ops in psycopg3
                 await conn.commit()
 
         return {"fatal_err": False}
 
     except Exception as e:
-        print(f"[ERROR] Failed to update transaction category: {e}")
+        log.error(f"Failed to update transaction category: {e}")
         return {"fatal_err": True}

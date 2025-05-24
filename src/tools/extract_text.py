@@ -1,5 +1,6 @@
 import pdfplumber
 from langchain_core.tools import tool
+from logger import log
 
 @tool
 def extract_text(path: str) -> dict:
@@ -13,7 +14,7 @@ def extract_text(path: str) -> dict:
         dict: {"extracted_text": "...", "fatal_err": False} or {"fatal_err": True}
     """
 
-    print(f"[extract_text] extracting text from {path}...")
+    log.info(f"[extract_text] extracting text from {path}...")
     
     output = ""
     

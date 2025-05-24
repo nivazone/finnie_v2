@@ -3,7 +3,7 @@ from pydantic import BaseModel, Field
 from typing import List
 from dependencies import get_transaction_classifier_llm, get_search_client
 import asyncio
-from math import ceil
+from logger import log
 
 BATCH_SIZE = 10
 
@@ -40,7 +40,7 @@ async def classify_transactions(input: Transactions) -> dict:
         dict: {"classifications": ..., "fatal_err": False} on success,
               {"fatal_err": True} on failure.
     """
-    print(f"[classify_transactions] classifying {len(input.transactions)} transactions...")
+    log.info(f"[classify_transactions] classifying {len(input.transactions)} transactions...")
 
     try:
         llm = get_transaction_classifier_llm().with_structured_output(TransactionClassifications)
@@ -85,5 +85,5 @@ async def classify_transactions(input: Transactions) -> dict:
         }
 
     except Exception as e:
-        print(f"[ERROR] Failed to classify transactions: {e}")
+        log.error(f"Failed to classify transactions: {e}")
         return {"fatal_err": True}

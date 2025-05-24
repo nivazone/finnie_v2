@@ -1,6 +1,7 @@
 from dependencies import get_db_pool
 from langchain_core.tools import tool
 import json
+from logger import log
 
 @tool
 async def write_statement_to_db(json_str: str) -> dict:
@@ -14,7 +15,7 @@ async def write_statement_to_db(json_str: str) -> dict:
         dict: Update to the AgentState. Sets 'fatal_err' = True if anything fails.
     """
 
-    print(f"[write_statement_to_db] saving to database...")
+    log.info(f"[write_statement_to_db] saving to database...")
 
     try:
         parsed_data = json.loads(json_str)
@@ -78,10 +79,10 @@ async def write_statement_to_db(json_str: str) -> dict:
                     return {"fatal_err": False}
 
                 except Exception as e:
-                    print(f"--- [ERROR] Database operation failed: {e}")
+                    log.error(f"Database operation failed: {e}")
                     await conn.rollback()
                     return {"fatal_err": True}
 
     except Exception as e:
-        print(f"--- [ERROR] Unknown error: {e}, json_str={json_str}")
+        log.error(f"Unknown error: {e}, json_str={json_str}")
         return {"fatal_err": True}
