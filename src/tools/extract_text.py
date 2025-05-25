@@ -2,6 +2,7 @@ import pdfplumber
 from langchain_core.tools import tool
 from logger import log
 import os
+from memory_store import put_item
 
 def _extract_text(path: str) -> dict:
     """
@@ -43,7 +44,7 @@ def extract_all_texts(folder_path: str) -> dict:
 
     Returns:
         dict: {
-            "batches": ["text of document 1", "text of document 2", ...],
+            "batch_refs": ["<ref_id1>", "<ref_id2>", ...],
             "fatal_err": False
         }
         or
@@ -52,7 +53,7 @@ def extract_all_texts(folder_path: str) -> dict:
 
     log.info(f"[extract_all_texts] going through {folder_path}...")
 
-    batches = []
+    ref_ids = []
     
     try:
         for filename in sorted(os.listdir(folder_path)):
@@ -60,9 +61,11 @@ def extract_all_texts(folder_path: str) -> dict:
                 full_path = os.path.join(folder_path, filename)
                 result = _extract_text(full_path)
                 content = result.get("extracted_text")
-                batches.append(content)
 
-        return {"batches": batches}
+                ref_id = put_item(content)
+                ref_ids.append(ref_id)
+
+        return {"batch_refs": ref_ids, "fatal_err": False}
 
     except Exception as e:
         log.error(f"[extract_all_texts_from_folder] Fatal error: {e}")

@@ -4,6 +4,7 @@ from pydantic import BaseModel, Field
 from logger import log
 from langchain_core.tools import tool
 import asyncio
+from memory_store import get_item, put_item
 
 DELAY_BETWEEN_BATCHES = 1.0
 
@@ -47,55 +48,54 @@ async def _parse_statement_text(text: str) -> dict:
     return {
         "parsed_text": response,
     }
-    
+
 @tool
-async def parse_all_statements(batch: List[str]) -> dict:
+async def parse_all_statements(ref_ids: List[str]) -> dict:
     """
-    Parses a raw batch of bank statement texts into structured data including transactions.
+    Parses a list of bank statement texts referenced by UUIDs and returns a list
+    of new UUIDs referencing each parsed result stored in memory.
+
+    Each input ref_id points to a raw bank statement (plain text).
+    Each output ref_id points to a parsed result (structured JSON).
 
     Args:
-        batch: A list of plain-text bank statements (as strings)
+        ref_ids (List[str]): List of memory store keys for raw statement texts.
 
     Returns:
         dict:
             {
-                "parsed_texts": [
-                    {"parsed_text": {...}},
-                    ...
-                ],
+                "parsed_refs": ["<parsed_ref1>", "<parsed_ref2>", ...],
                 "fatal_err": False
             }
             or
-            {"fatal_err": True} if any statement fails.
-        }
+            {
+                "fatal_err": True
+            } if any parsing fails.
     """
+    log.info(f"[parse_all_statements] parsing {len(ref_ids)} statement(s)...")
 
-    log.info(f"[parse_all_statements] parsing extracted texts...")
+    parsed_refs = []
 
-    parsed_texts = []
-
-    for i, text in enumerate(batch):
-        log.info(f"[parse_all_statements] parsing statement {i + 1}/{len(batch)}")
+    for i, ref_id in enumerate(ref_ids):
+        log.info(f"[parse_all_statements] fetching and parsing ref_id {ref_id} ({i + 1}/{len(ref_ids)})")
 
         try:
-            result = await _parse_statement_text(text)
-            
+            raw_text = get_item(ref_id)
+            result = await _parse_statement_text(raw_text)
+
             if result.get("fatal_err"):
                 log.error(f"[parse_all_statements] fatal error during parsing at index {i}")
                 return {"fatal_err": True}
 
-            parsed_texts.append({"parsed_text": result["parsed_text"]})
+            parsed_ref = put_item({"parsed_text": result["parsed_text"]})
+            parsed_refs.append(parsed_ref)
 
-            log.info(f"parsed {i+1} statement(s) in this batch. Waiting {DELAY_BETWEEN_BATCHES} second(s) to avoid rate limits.")
+            log.info(f"[parse_all_statements] parsed {i + 1}/{len(ref_ids)}. Sleeping {DELAY_BETWEEN_BATCHES}s.")
             await asyncio.sleep(DELAY_BETWEEN_BATCHES)
 
         except Exception as e:
             log.error(f"[parse_all_statements] exception at index {i}: {e}")
             return {"fatal_err": True}
 
-    return {
-        "parsed_texts": parsed_texts,
-        "fatal_err": False
-    }
-
+    return {"parsed_refs": parsed_refs, "fatal_err": False}
     

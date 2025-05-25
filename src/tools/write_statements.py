@@ -3,7 +3,7 @@ from langchain_core.tools import tool
 import json
 from logger import log
 from psycopg import AsyncConnection, AsyncCursor
-
+from memory_store import get_item
 
 async def _write_statement(json_str: str, conn: AsyncConnection, cur: AsyncCursor) -> None:
     """
@@ -71,30 +71,46 @@ async def _write_statement(json_str: str, conn: AsyncConnection, cur: AsyncCurso
         ))
 
 @tool
-async def write_all_statements(json_strs: list[str]) -> dict:
+async def write_all_statements(parsed_refs: list[str]) -> dict:
     """
-    Writes a batch of structured bank statement data to the database.
+    Writes a batch of structured bank statement data to the database using references
+    to parsed statement objects.
+
+    Each parsed_ref should point to a dictionary like:
+        {"parsed_text": <BankStatement schema-compatible dict>}
 
     Args:
-        json_strs: List of valid JSON strings representing parsed bank statements.
+        parsed_refs (List[str]): List of reference keys in memory store
 
     Returns:
-        dict: Update to the AgentState. Sets 'fatal_err' = True if anything fails.
+        dict:
+            {
+                "fatal_err": False
+            }
+            or
+            {
+                "fatal_err": True
+            } if any statement fails.
     """
 
-    log.info(f"[write_all_statements] saving {len(json_strs)} statements to database...")
+    log.info(f"[write_all_statements] saving {len(parsed_refs)} statements to database...")
 
     try:
         pool = get_db_pool()
 
         async with pool.connection() as conn:
             async with conn.cursor() as cur:
-                for i, json_str in enumerate(json_strs):
-                    log.info(f"[write_all_statements] inserting statement {i + 1}...")
+                for i, ref_id in enumerate(parsed_refs):
+                    log.info(f"[write_all_statements] inserting statement {i + 1} from ref {ref_id}...")
+
                     try:
+                        entry = get_item(ref_id)
+                        json_str = json.dumps(entry["parsed_text"].dict())
+
                         await _write_statement(json_str, conn, cur)
+
                     except Exception as e:
-                        log.error(f"--- [write_all_statements] failed on index {i}: {e}")
+                        log.error(f"[write_all_statements] failed on index {i} (ref {ref_id}): {e}")
                         await conn.rollback()
                         return {"fatal_err": True}
 
