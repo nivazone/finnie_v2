@@ -9,7 +9,7 @@ from state import AgentState
 from tools import (
     extract_all_texts,
     parse_all_statements,
-    read_statement_from_db,
+    read_transactions,
     update_transaction_classification,
     classify_transactions,
     write_all_statements
@@ -21,7 +21,7 @@ TOOLS: List[Callable[..., Any]] = [
     extract_all_texts,
     parse_all_statements,
     write_all_statements,
-    read_statement_from_db,
+    read_transactions,
     update_transaction_classification,
     classify_transactions
 ]
@@ -35,7 +35,7 @@ def route_tools(state: AgentState):
     """
     
     if state.get("fatal_err") is True:
-        log.info("[route_tools] fatal error detected. Ending execution.")
+        log.fatal("[route_tools] fatal error detected. Ending execution.")
         return END
     
     if isinstance(state, list):

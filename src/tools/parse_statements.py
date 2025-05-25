@@ -75,13 +75,13 @@ async def parse_all_statements(batch: List[str]) -> dict:
     parsed_texts = []
 
     for i, text in enumerate(batch):
-        log.info(f"[parse_all_statements] Parsing statement {i + 1}/{len(batch)}")
+        log.info(f"[parse_all_statements] parsing statement {i + 1}/{len(batch)}")
 
         try:
             result = await _parse_statement_text(text)
             
             if result.get("fatal_err"):
-                log.error(f"[parse_all_statements] Fatal error during parsing at index {i}")
+                log.error(f"[parse_all_statements] fatal error during parsing at index {i}")
                 return {"fatal_err": True}
 
             parsed_texts.append({"parsed_text": result["parsed_text"]})
@@ -90,7 +90,7 @@ async def parse_all_statements(batch: List[str]) -> dict:
             await asyncio.sleep(DELAY_BETWEEN_BATCHES)
 
         except Exception as e:
-            log.error(f"[parse_all_statements] Exception at index {i}: {e}")
+            log.error(f"[parse_all_statements] exception at index {i}: {e}")
             return {"fatal_err": True}
 
     return {
