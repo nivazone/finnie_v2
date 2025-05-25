@@ -6,6 +6,7 @@ import asyncio
 from logger import log
 
 BATCH_SIZE = 10
+DELAY_BETWEEN_BATCHES = 0.5
 
 class Transaction(BaseModel):
     """Input model for a single transaction to classify."""
@@ -85,6 +86,12 @@ async def classify_transactions(input: Transactions) -> dict:
                 batch_results = result.results
             
             all_results.extend(batch_results)
+            log.info(f"""
+                Classified {len(batch_results)} transactions in this batch. Waiting {DELAY_BETWEEN_BATCHES} to avoid rate limits.
+            """)
+            
+            await asyncio.sleep(DELAY_BETWEEN_BATCHES)
+
 
         return {
             "classifications": TransactionClassifications(results=all_results).dict(),

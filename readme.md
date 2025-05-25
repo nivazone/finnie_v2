@@ -41,10 +41,11 @@ Install dependencies:
 pip install -r requirements.txt
 ```
 
-TODO
+## TODO
 
-- fatal error handling - done
-- add data validation to make sure the expected data is there - done
-- integrate proper logging - done
-- make items singleton - done
-- implement streaming
+- Conversational Financial Assistant
+- LLM-Based Anomaly Detector
+- Generate human-readable summaries of monthly/quarterly spending.
+- Natural-Language Categorization Rules, Allow user to define logic like: “Put all Uber rides under Transport” or“Flag anything with ‘crypto’ as High Risk”
+- Tax Deductibility Classification
+- Auto-Budgeting Suggestions
