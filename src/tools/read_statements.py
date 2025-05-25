@@ -5,6 +5,7 @@ from psycopg.rows import dict_row
 from logger import log
 from typing import Optional
 from langchain_core.tools import tool
+from memory_store import put_item
 
 def _to_float(value):
     return float(value) if isinstance(value, Decimal) else value
@@ -12,16 +13,25 @@ def _to_float(value):
 @tool
 async def read_transactions(start_date: Optional[str] = None, end_date: Optional[str] = None) -> dict:
     """
-    Reads transaction data for a given period from the transactions table.
+    Reads transaction data for a given period from the transactions table and stores
+    the result in memory. Returns a reference ID to retrieve it later.
 
     Args:
         start_date: Optional ISO date string (YYYY-MM-DD)
         end_date: Optional ISO date string (YYYY-MM-DD)
 
     Returns:
-        dict: {"transactions_json": "...", "fatal_err": False} or {"fatal_err": True}
+        dict:
+            {
+                "transactions_ref": "<ref_id>",
+                "fatal_err": False
+            }
+            or
+            {
+                "fatal_err": True
+            } on failure.
     """
-
+    
     log.info(f"[read_transactions] reading transactions from DB...")
 
     try:
@@ -50,10 +60,8 @@ async def read_transactions(start_date: Optional[str] = None, end_date: Optional
                 rows = await cur.fetchall()
 
                 if not rows:
-                    return {
-                        "transactions_json": json.dumps({"transactions": []}),
-                        "fatal_err": False
-                    }
+                    ref_id = put_item({"transactions": []})
+                    return {"transactions_ref": ref_id, "fatal_err": False}
                 
                 log.info(f"[read_transactions] read {len(rows)} transactions...")
 
@@ -70,14 +78,9 @@ async def read_transactions(start_date: Optional[str] = None, end_date: Optional
                     for row in rows
                 ]
 
-                return {
-                    "transactions_json": json.dumps({"transactions": transactions}),
-                    "fatal_err": False
-                }
+                ref_id = put_item({"transactions": transactions})
+                return {"transactions_ref": ref_id, "fatal_err": False}
 
     except Exception as e:
         log.error(f"[read_transactions] failed to read transactions: {e}")
-        return {
-            "transactions_json": json.dumps({}),
-            "fatal_err": True
-        }
+        return {"fatal_err": True}

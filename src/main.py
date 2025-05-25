@@ -12,7 +12,7 @@ from config import get_settings, Settings
 from langsmith import traceable
 
 @traceable(name="finnie")
-async def begin(s: Settings):
+async def begin(input_path: str):
     llm = get_llm()
     finnie = get_graph(llm)
 
@@ -30,7 +30,7 @@ async def begin(s: Settings):
     
     return await finnie.ainvoke({
         "messages": messages,
-        "input_folder": s.INPUT_FOLDER,
+        "input_folder": input_path,
         "fatal_err": False,
     })
 
@@ -42,7 +42,7 @@ async def main():
         
         await init_db_pool()
         
-        response = await begin(s)
+        response = await begin(s.INPUT_FOLDER)
 
         log.info(response['messages'][-1].content)
 
