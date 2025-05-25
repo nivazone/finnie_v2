@@ -3,7 +3,7 @@ from langchain_core.tools import tool
 from logger import log
 import os
 
-def extract_text(path: str) -> dict:
+def _extract_text(path: str) -> dict:
     """
     Extracts the full textual content and tabular data from a PDF file.
 
@@ -43,11 +43,11 @@ def extract_all_texts(folder_path: str) -> dict:
 
     Returns:
         dict: {
-            "batches": [
-                {"filename": "abc.pdf", "content": "..."},
-                {"filename": "xyz.pdf", "content": "..."}
-            ]
+            "batches": ["text of document 1", "text of document 2", ...],
+            "fatal_err": False
         }
+        or
+        {"fatal_err": True} if any fails.
     """
 
     log.info(f"[extract_all_texts] going through {folder_path}...")
@@ -58,13 +58,9 @@ def extract_all_texts(folder_path: str) -> dict:
         for filename in sorted(os.listdir(folder_path)):
             if filename.lower().endswith(".pdf"):
                 full_path = os.path.join(folder_path, filename)
-                result = extract_text(full_path)
+                result = _extract_text(full_path)
                 content = result.get("extracted_text")
-
-                batches.append({
-                    "filename": filename,
-                    "content": content
-                })
+                batches.append(content)
 
         return {"batches": batches}
 

@@ -8,7 +8,7 @@ from typing import Any, Callable, List
 from state import AgentState
 from tools import (
     extract_all_texts,
-    parse_statement_text,
+    parse_all_statements,
     write_statement_to_db,
     read_statement_from_db,
     update_transaction_classification,
@@ -19,7 +19,7 @@ from logger import log
 
 TOOLS: List[Callable[..., Any]] = [
     extract_all_texts,
-    parse_statement_text,
+    parse_all_statements,
     write_statement_to_db,
     read_statement_from_db,
     update_transaction_classification,
