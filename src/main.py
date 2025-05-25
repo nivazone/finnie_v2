@@ -11,7 +11,7 @@ from logger import log
 from config import get_settings, Settings
 from langsmith import traceable
 
-@traceable
+@traceable(name="finnie")
 async def begin(s: Settings):
     llm = get_llm()
     finnie = get_graph(llm)

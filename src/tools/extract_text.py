@@ -14,7 +14,7 @@ def _extract_text(path: str) -> dict:
         dict: {"extracted_text": "...", "fatal_err": False} or {"fatal_err": True}
     """
 
-    log.info(f"[extract_text] extracting text from {path}...")
+    log.info(f"[_extract_text] extracting text from {path}...")
     
     output = ""
     
