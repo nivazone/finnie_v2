@@ -9,10 +9,10 @@ from state import AgentState
 from tools import (
     extract_all_texts,
     parse_all_statements,
-    write_statement_to_db,
     read_statement_from_db,
     update_transaction_classification,
-    classify_transactions
+    classify_transactions,
+    write_all_statements
 )
 import json
 from logger import log
@@ -20,7 +20,7 @@ from logger import log
 TOOLS: List[Callable[..., Any]] = [
     extract_all_texts,
     parse_all_statements,
-    write_statement_to_db,
+    write_all_statements,
     read_statement_from_db,
     update_transaction_classification,
     classify_transactions

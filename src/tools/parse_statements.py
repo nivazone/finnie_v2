@@ -86,9 +86,7 @@ async def parse_all_statements(batch: List[str]) -> dict:
 
             parsed_texts.append({"parsed_text": result["parsed_text"]})
 
-            log.info(f"""
-                Parsed {i+1} statement(s) in this batch. Waiting {DELAY_BETWEEN_BATCHES} to avoid rate limits.
-            """)
+            log.info(f"parsed {i+1} statement(s) in this batch. Waiting {DELAY_BETWEEN_BATCHES} to avoid rate limits.")
             await asyncio.sleep(DELAY_BETWEEN_BATCHES)
 
         except Exception as e:
