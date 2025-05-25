@@ -4,9 +4,10 @@ from typing import List
 from dependencies import get_transaction_classifier_llm, get_search_client
 import asyncio
 from logger import log
+from memory_store import get_item, put_item
 
-BATCH_SIZE = 10
-DELAY_BETWEEN_BATCHES = 0.5
+BATCH_SIZE = 50
+DELAY_BETWEEN_BATCHES = 1.0
 
 class Transaction(BaseModel):
     """Input model for a single transaction to classify."""
@@ -30,33 +31,48 @@ class TransactionClassifications(BaseModel):
     results: List[TransactionClassification]
 
 @tool
-async def classify_transactions(input: Transactions) -> dict:
+async def classify_transactions(transactions_ref: str) -> dict:
     """
     Classifies a list of bank transactions into categories using web context and an LLM.
+    Transactions are read from memory using a provided reference ID.
 
     Args:
-        input (Transactions): Contains a list of transactions with id and description.
+        transactions_ref (str): UUID key referencing a list of transaction dicts stored in memory.
+            Each transaction must have: transaction_id, description.
 
     Returns:
-        dict: {"classifications": ..., "fatal_err": False} on success,
-              {"fatal_err": True} on failure.
+        dict:
+            {
+                "classifications_ref": "<ref_id>",
+                "fatal_err": False
+            }
+            or
+            {
+                "fatal_err": True
+            } on failure.
     """
-    log.info(f"[classify_transactions] classifying {len(input.transactions)} transactions...")
-
     try:
+        transactions_data = get_item(transactions_ref)
+        transactions = transactions_data.get("transactions", [])
+
+        log.info(f"[classify_transactions] classifying {len(transactions)} transactions...")
+
+        if not transactions:
+            return {"classifications_ref": put_item({"results": []}), "fatal_err": False}
+
         llm = get_transaction_classifier_llm().with_structured_output(TransactionClassifications)
         search_client = get_search_client()
 
-        batches = [input.transactions[i:i + BATCH_SIZE] for i in range(0, len(input.transactions), BATCH_SIZE)]
+        batches = [transactions[i:i + BATCH_SIZE] for i in range(0, len(transactions), BATCH_SIZE)]
         all_results = []
 
         for batch in batches:
-            async def fetch_context(tx: Transaction):
-                results = await search_client.ainvoke({"query": tx.description})
+            async def fetch_context(tx: dict):
+                results = await search_client.ainvoke({"query": tx["description"]})
                 web_context = "\n".join(f"- {r.get('title', '')}: {r.get('content', '')}" for r in results.get("results", []))
                 return {
-                    "transaction_id": tx.transaction_id,
-                    "description": tx.description,
+                    "transaction_id": tx["transaction_id"],
+                    "description": tx["description"],
                     "web_context": web_context
                 }
 
@@ -78,26 +94,20 @@ async def classify_transactions(input: Transactions) -> dict:
                 """
 
             result = await llm.ainvoke(prompt)
-            
 
-            if isinstance(result, dict):
-                batch_results = result.get("results", [])
-            else:
-                batch_results = result.results
+            batch_results = result.get("results") if isinstance(result, dict) else result.results
+            
+            if batch_results is None:
+                batch_results = []
             
             all_results.extend(batch_results)
-            log.info(f"""
-                Classified {len(batch_results)} transactions in this batch. Waiting {DELAY_BETWEEN_BATCHES} to avoid rate limits.
-            """)
-            
+
+            log.info(f"[classify_transactions] Classified {len(batch_results)} transactions. Sleeping {DELAY_BETWEEN_BATCHES}s.")
             await asyncio.sleep(DELAY_BETWEEN_BATCHES)
 
-
-        return {
-            "classifications": TransactionClassifications(results=all_results).dict(),
-            "fatal_err": False
-        }
+        classifications_ref = put_item(TransactionClassifications(results=all_results).dict())
+        return {"classifications_ref": classifications_ref, "fatal_err": False}
 
     except Exception as e:
-        log.error(f"Failed to classify transactions: {e}")
+        log.error(f"[classify_transactions] Failed to classify transactions: {e}")
         return {"fatal_err": True}
