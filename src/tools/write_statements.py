@@ -90,11 +90,11 @@ async def write_all_statements(json_strs: list[str]) -> dict:
         async with pool.connection() as conn:
             async with conn.cursor() as cur:
                 for i, json_str in enumerate(json_strs):
-                    log.info(f"[write_all_statements] Inserting statement {i + 1}...")
+                    log.info(f"[write_all_statements] inserting statement {i + 1}...")
                     try:
                         await _write_statement(json_str, conn, cur)
                     except Exception as e:
-                        log.error(f"--- [write_all_statements] Failed on index {i}: {e}")
+                        log.error(f"--- [write_all_statements] failed on index {i}: {e}")
                         await conn.rollback()
                         return {"fatal_err": True}
 
@@ -102,5 +102,5 @@ async def write_all_statements(json_strs: list[str]) -> dict:
                 return {"fatal_err": False}
 
     except Exception as e:
-        log.error(f"[write_all_statements] DB connection error or unknown failure: {e}")
+        log.error(f"[write_all_statements] unknown failure: {e}")
         return {"fatal_err": True}
