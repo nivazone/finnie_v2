@@ -1,9 +1,9 @@
 from langchain_openai import ChatOpenAI
-from langchain_tavily import TavilySearch
 from pydantic import SecretStr
 from config import get_settings
 from functools import lru_cache
 from psycopg_pool import AsyncConnectionPool
+from search_providers import TavilySearchClient, SerperSearchClient, SearchProvider
 
 @lru_cache(maxsize=1)
 def get_llm() -> ChatOpenAI:
@@ -36,9 +36,16 @@ def get_transaction_classifier_llm() -> ChatOpenAI:
     )
 
 @lru_cache(maxsize=1)
-def get_search_client() -> TavilySearch:
-    client = TavilySearch(max_results=3)
-    return client
+def get_search_client() -> SearchProvider:
+    s = get_settings()
+    provider = (s.SEARCH_PROVIDER or "tavily").lower()
+
+    if provider == "tavily":
+        return TavilySearchClient(max_results=3)
+    elif provider == "serper":
+        return SerperSearchClient(max_results=3)
+    else:
+        raise ValueError(f"Unsupported search provider: {provider}")
 
 # -----------------------------
 # Async DB Pool

@@ -43,6 +43,7 @@ pip install -r requirements.txt
 
 ## TODO
 
+- Add chache to minimise search queries
 - Conversational Financial Assistant
 - LLM-Based Anomaly Detector
 - Generate human-readable summaries of monthly/quarterly spending.

@@ -21,8 +21,6 @@ async def update_transaction_classification(classifications_ref: str) -> dict:
         data = get_item(classifications_ref)
         results = data.get("results", [])
 
-        log.info(f"[update_transaction_classification] results: {results}")
-
         if not results:
             log.warning("[update_transaction_classification] no classifications to update.")
             return {"fatal_err": False}
