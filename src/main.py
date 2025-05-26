@@ -48,17 +48,16 @@ async def main():
     finally:
         await close_db_pool()
 
-def draw_graph(graph) -> None:
+def draw_graph() -> None:
+    llm = get_llm()
+    graph = get_graph(llm)
+
     png_bytes = graph.get_graph().draw_mermaid_png(
         draw_method=MermaidDrawMethod.PYPPETEER
     )
     PILImage.open(BytesIO(png_bytes)).show()
 
 if __name__ == "__main__":
+    # draw_graph(finnie_graph)
 
-    llm = get_llm()
-    finnie_graph = get_graph(llm)
-
-    draw_graph(finnie_graph)
-    
-    # asyncio.run(main())
+    asyncio.run(main())

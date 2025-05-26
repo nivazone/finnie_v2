@@ -51,6 +51,7 @@ async def classify_transactions(transactions_ref: str) -> dict:
                 "fatal_err": True
             } on failure.
     """
+    
     try:
         transactions_data = get_item(transactions_ref)
         transactions = transactions_data.get("transactions", [])
