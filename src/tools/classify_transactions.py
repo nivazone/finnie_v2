@@ -70,6 +70,7 @@ async def classify_transactions(transactions_ref: str) -> dict:
             async def fetch_context(tx: dict):
                 results = await search_client.ainvoke({"query": tx["description"]})
                 web_context = "\n".join(f"- {r.get('title', '')}: {r.get('content', '')}" for r in results.get("results", []))
+
                 return {
                     "transaction_id": tx["transaction_id"],
                     "description": tx["description"],
@@ -80,7 +81,17 @@ async def classify_transactions(transactions_ref: str) -> dict:
 
             prompt = """
                 Classify each transaction into one of the following categories:
-                - Groceries, Transport, Utilities, Insurance, Entertainment, Subscriptions, Healthcare, Dining, Vet, Unknown
+                - Groceries
+                - Transport
+                - Household Bills
+                - Entertainment
+                - Subscriptions
+                - Healthcare
+                - Dining
+                - Vet & Pet Care
+                - Shopping
+                - Travel
+                - Unknown
 
                 For each transaction, respond with: transaction_id and classification.
                 """
