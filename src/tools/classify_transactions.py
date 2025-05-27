@@ -8,6 +8,7 @@ from memory_store import get_item, put_item
 
 BATCH_SIZE = 50
 DELAY_BETWEEN_BATCHES = 1.0
+ENRICH_WITH_WEB_CONTEXT = True
 
 class Transaction(BaseModel):
     """Input model for a single transaction to classify."""
@@ -68,8 +69,11 @@ async def classify_transactions(transactions_ref: str) -> dict:
 
         for batch in batches:
             async def fetch_context(tx: dict):
-                results = await search_client.ainvoke({"query": tx["description"]})
-                web_context = "\n".join(f"- {r.get('title', '')}: {r.get('content', '')}" for r in results.get("results", []))
+                web_context = ""
+                
+                if ENRICH_WITH_WEB_CONTEXT:
+                    results = await search_client.ainvoke({"query": tx["description"]})
+                    web_context = "\n".join(f"- {r.get('title', '')}: {r.get('content', '')}" for r in results.get("results", []))
 
                 return {
                     "transaction_id": tx["transaction_id"],
