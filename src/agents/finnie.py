@@ -8,53 +8,53 @@ from .sage import get_graph as get_sage_graph
 from langchain_core.runnables import Runnable
 from logger import log
 
-async def finnie(state: AgentState, llm: ChatOpenAI):
-    sys_msg = SystemMessage(content=f"""
-        You are Finnie, a helpful agent that can manage other agents.
-        Route the message based on its intent.
+async def supervisor(state: AgentState, llm: ChatOpenAI):
+    sys_msg = SystemMessage(content="""
+        You are Finnie, the master agent responsible for orchestrating specialist agents.
 
-        If it's about bank statements, parsing PDFs, or classifying transactions, choose: scribe
-        If it's about financial questions or insights from past data, choose: sage
+        Decide which agent to invoke next:
+        - Choose 'scribe' for statement processing, classification, and parsing.
+        - Choose 'sage' for querying insights, analytics, or summaries from transactions.
 
-        Respond with only: scribe or sage.
-        
-        Message:
+        Return ONLY the name of the agent: 'scribe', 'sage', or 'end'.
     """)
 
-    llm_with_tools = llm
-    response = await llm_with_tools.ainvoke([sys_msg] + state["messages"])
-
-    log.info(f"[finnie] routed to {response.content}")
-
+    response = await llm.ainvoke([sys_msg] + state["messages"])
+    decision = str(response.content).strip().lower()
     
-    return {
-        "messages": [response],
-        "active_agent": str(response.content).strip().lower()
-    }
+    log.info(f"[supervisor] routed to: {decision}")
+    
+    return {"messages": [response], "next": decision}
+
+async def end_convo(state: AgentState):
+    log.info("[supervisor] Conversation ended.")
+    return {"messages": state["messages"], "final": True}
 
 def get_graph(llm: ChatOpenAI) -> Runnable:
-    finnie_node = partial(finnie, llm=llm)
-
+    supervisor_node = partial(supervisor, llm=llm)
     scribe_graph = get_scribe_graph(llm)
     sage_graph = get_sage_graph(llm)
 
     builder = StateGraph(AgentState)
-    builder.set_entry_point("finnie")
+    builder.set_entry_point("supervisor")
 
-    builder.add_node("finnie", finnie_node)
+    builder.add_node("supervisor", supervisor_node)
     builder.add_node("scribe", scribe_graph)
     builder.add_node("sage", sage_graph)
+    builder.add_node("finish", end_convo)
 
     builder.add_conditional_edges(
-        "finnie",
-        lambda state: state["active_agent"],
+        "supervisor",
+        lambda state: state.get("next"),
         {
             "scribe": "scribe",
-            "sage": "sage"
+            "sage": "sage",
+            "end": "finish"
         }
     )
 
-    builder.add_edge("scribe", "finnie")
-    builder.add_edge("sage", "finnie")
+    # Loop back to supervisor for multi-turn convo
+    builder.add_edge("scribe", "supervisor")
+    builder.add_edge("sage", "supervisor")
 
     return builder.compile()

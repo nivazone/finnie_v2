@@ -75,6 +75,13 @@ def merge_tool_output(state: AgentState) -> AgentState:
 
     return state
 
+async def done(state: AgentState):
+    log.info("[scribe] task complete.")
+    return {
+        "messages": state["messages"],
+        "fatal_err": state.get("fatal_err", False)
+    }
+
 def get_graph(llm) -> Runnable:
     scribe_node = partial(scribe, llm=llm)
 
@@ -82,12 +89,13 @@ def get_graph(llm) -> Runnable:
     builder.add_node("scribe", scribe_node)
     builder.add_node("tools", ToolNode(TOOLS))
     builder.add_node("merge_output", merge_tool_output)
+    builder.add_node("done", done)
 
     builder.set_entry_point("scribe")
 
     builder.add_conditional_edges("scribe", route_tools)
     builder.add_edge("tools", "merge_output")
     builder.add_edge("merge_output", "scribe")
-    builder.add_edge("scribe", END)
+    builder.add_edge("done", END)
 
     return builder.compile()

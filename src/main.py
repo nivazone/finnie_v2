@@ -58,6 +58,6 @@ def draw_graph() -> None:
     PILImage.open(BytesIO(png_bytes)).show()
 
 if __name__ == "__main__":
-    # draw_graph(finnie_graph)
+    # draw_graph()
 
     asyncio.run(main())

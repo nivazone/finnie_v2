@@ -26,4 +26,5 @@ def get_graph(llm: ChatOpenAI) -> Runnable:
     builder.set_entry_point("sage")
     
     builder.add_edge("sage", END)
+
     return builder.compile()
