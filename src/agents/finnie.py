@@ -15,16 +15,27 @@ async def supervisor(state: AgentState, llm: ChatOpenAI):
         Decide which agent to invoke next:
         - Choose 'scribe' for statement processing, classification, and parsing.
         - Choose 'sage' for querying insights, analytics, or summaries from transactions.
+        - Choose 'end' if the conversation or processing is complete, or an error has occurred.
 
-        Return ONLY the name of the agent: 'scribe', 'sage', or 'end'.
+        Return ONLY one of these: 'scribe', 'sage', or 'end'.
+        Do not explain or add any extra text.
     """)
 
     response = await llm.ainvoke([sys_msg] + state["messages"])
     decision = str(response.content).strip().lower()
-    
+
     log.info(f"[supervisor] routed to: {decision}")
-    
-    return {"messages": [response], "next": decision}
+
+    # Fallback in case LLM returns invalid string
+    if decision not in {"scribe", "sage", "end"}:
+        log.warning(f"[supervisor] Unexpected decision: {decision}, defaulting to 'end'")
+        decision = "end"
+
+    return {
+        "messages": [response],
+        "next": decision
+    }
+
 
 async def end_convo(state: AgentState):
     log.info("[supervisor] Conversation ended.")

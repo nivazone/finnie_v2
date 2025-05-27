@@ -27,28 +27,40 @@ TOOLS: List[Callable[..., Any]] = [
 ]
 
 def route_tools(state: AgentState):
-    """
-    Use in the conditional_edge to route to the ToolNode.
-    Check if there are fatal errors, if yes, route to END.
-    If not, check if the last message has tool calls.
-    Otherwise, route to the end.
-    """
-    
     if state.get("fatal_err") is True:
-        log.fatal("[route_tools] fatal error detected. Ending execution.")
-        return END
-    
+        return "handle_fatal_error"
+
     if isinstance(state, list):
         ai_message = state[-1]
     elif messages := state.get("messages", []):
         ai_message = messages[-1]
     else:
         raise ValueError(f"No messages found in input state to tool_edge: {state}")
-    
+
     if isinstance(ai_message, AIMessage) and getattr(ai_message, "tool_calls", None):
         return "tools"
-    
-    return END
+
+    return "done"
+
+async def handle_fatal_error(state: AgentState) -> AgentState:
+    log.fatal("[fatal_error_handler] handling fatal error...")
+
+    messages = state.get("messages", [])
+    if messages:
+        last_message = messages[-1]
+        if isinstance(last_message, AIMessage) and getattr(last_message, "tool_calls", None):
+            tool_messages = [
+                ToolMessage(
+                    tool_call_id=call["id"],
+                    content=json.dumps({"fatal_err": True})
+                )
+                for call in last_message.tool_calls
+            ]
+            state["messages"] += tool_messages
+
+    return state
+
+
 
 async def scribe(state: AgentState, llm: ChatOpenAI):
     sys_msg = SystemMessage(content=f"""
@@ -89,6 +101,7 @@ def get_graph(llm) -> Runnable:
     builder.add_node("scribe", scribe_node)
     builder.add_node("tools", ToolNode(TOOLS))
     builder.add_node("merge_output", merge_tool_output)
+    builder.add_node("handle_fatal_error", handle_fatal_error)
     builder.add_node("done", done)
 
     builder.set_entry_point("scribe")
@@ -96,6 +109,7 @@ def get_graph(llm) -> Runnable:
     builder.add_conditional_edges("scribe", route_tools)
     builder.add_edge("tools", "merge_output")
     builder.add_edge("merge_output", "scribe")
+    builder.add_edge("handle_fatal_error", "done")
     builder.add_edge("done", END)
 
     return builder.compile()
