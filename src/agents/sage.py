@@ -6,15 +6,11 @@ from langchain_core.messages import SystemMessage
 from langchain_core.runnables import Runnable
 
 async def sage(state: AgentState, llm: ChatOpenAI):
-    sys_msg = SystemMessage(content=f"""
-        You are a helpful agent named Sage.
-        You can answer questions.
-    """)
-    llm_with_tools = llm
-    response = await llm_with_tools.ainvoke([sys_msg] + state["messages"])
+    sys_msg = SystemMessage(content="You are Sage, a helpful financial assistant. Answer user questions concisely and clearly.")
+    response = await llm.ainvoke([sys_msg] + state["messages"])
     
     return {
-        "messages": [response]
+        "messages": state["messages"] + [response]
     }
 
 def get_graph(llm: ChatOpenAI) -> Runnable:
@@ -28,3 +24,5 @@ def get_graph(llm: ChatOpenAI) -> Runnable:
     builder.add_edge("sage", END)
 
     return builder.compile()
+
+

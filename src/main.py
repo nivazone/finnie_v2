@@ -16,15 +16,21 @@ async def begin(input_path: str):
     llm = get_llm()
     finnie_graph = get_graph(llm)
 
+    # messages = [
+    #     HumanMessage(content="""
+    #     Process all available bank statement using the following workflow.
+    #         1. get plain text version for each statement in the folder.
+    #         2. parse each plain text version so that you can get a JSON version.
+    #         3. save each statement JSON to database for future use.
+    #         4. wait for each statement to finish parsing and saving to database before proceeding further
+    #         5. once all statements are parsed and saved to database, get all transactions from the database for each statement and classify them using classify transactions tool.
+    #         6. update the transaction classification in database.
+    #     """)
+    # ]
+
     messages = [
         HumanMessage(content="""
-        Process all available bank statement using the following workflow.
-            1. get plain text version for each statement in the folder.
-            2. parse each plain text version so that you can get a JSON version.
-            3. save each statement JSON to database for future use.
-            4. wait for each statement to finish parsing and saving to database before proceeding further
-            5. once all statements are parsed and saved to database, get all transactions from the database for each statement and classify them using classify transactions tool.
-            6. update the transaction classification in database.
+        what is a transaction?
         """)
     ]
 

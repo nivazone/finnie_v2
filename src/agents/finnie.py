@@ -21,15 +21,13 @@ async def supervisor(state: AgentState, llm: ChatOpenAI):
         Do not explain or add any extra text.
     """)
 
+    all = [sys_msg] + state["messages"]
+    log.info(f"[supervisor] LLM response: {all}")
     response = await llm.ainvoke([sys_msg] + state["messages"])
+    
     decision = str(response.content).strip().lower()
 
     log.info(f"[supervisor] routed to: {decision}")
-
-    # Fallback in case LLM returns invalid string
-    if decision not in {"scribe", "sage", "end"}:
-        log.warning(f"[supervisor] Unexpected decision: {decision}, defaulting to 'end'")
-        decision = "end"
 
     return {
         "messages": [response],
