@@ -64,17 +64,18 @@ CODER_TOOLS = [coder_tool]
 # ---------------------------------------------------------------------------
 #  Supervisor
 # ---------------------------------------------------------------------------
-members = ["Weather", "Coder"]
+members = ["Weather", "Coder", "Fallback"]
 options  = ["FINISH"] + members
 
 class RouteResponse(BaseModel):
-    next: Literal["FINISH", "Weather", "Coder"]
+    next: Literal["FINISH", "Weather", "Coder", "Fallback"]
 
 system_prompt = """
 You are a supervisor managing the following agents: {members}.
 Routing rule:
-  - Coding questions → Coder
-  - Weather related → Weather
+  - Coding questions    → Coder
+  - Weather related     → Weather
+  - Other               → Fallback
   - If no agent is suitable, route to FINISH.
 When an agent sets {{"next": "FINISH"}}, reply FINISH.
 """.strip()
@@ -126,6 +127,14 @@ def coder_agent(state: AgentState, llm: ChatOpenAI):
     first = llm.bind_tools([coder_tool]).invoke([sys] + state["messages"])
     return {"messages": [first], "next": None}
 
+def fallback_agent(state: AgentState, llm: ChatOpenAI):
+    sys = SystemMessage(
+        content="The request doesn’t match any available skills. "
+                "Apologise and say you don’t know the answer."
+    )
+    reply = llm.invoke([sys] + state["messages"])
+    return {"messages": [reply], "next": "FINISH"}
+
 # ---------------------------------------------------------------------------
 #  Build graph
 # ---------------------------------------------------------------------------
@@ -140,6 +149,11 @@ wf.add_node(
     "Coder",
     functools.partial(agent_node, agent_fn=functools.partial(coder_agent, llm=llm), name="Coder"),
 )
+wf.add_node(
+    "Fallback",
+    functools.partial(agent_node, agent_fn=functools.partial(fallback_agent, llm=llm), name="Fallback"),
+)
+
 wf.add_node("WeatherTools", ToolNode([weather_tool]))
 wf.add_node("CoderTools",      ToolNode([coder_tool]))
 wf.add_node("Supervisor", functools.partial(supervisor, llm=llm))
@@ -167,7 +181,7 @@ wf.add_edge("CoderTools", "Coder")
 wf.add_conditional_edges(
     "Supervisor",
     lambda s: s["next"],
-    {"Weather": "Weather", "Coder": "Coder", "FINISH": END},
+    {"Weather": "Weather", "Coder": "Coder", "Fallback": "Fallback", "FINISH": END},
 )
 
 graph = wf.compile()
@@ -187,6 +201,14 @@ print("\nFinal state:\n", result['messages'][-1].content)
 result = graph.invoke(
     {"messages": [
         HumanMessage(content="how is today's weather?"),
+    ]}
+)
+
+print("\nFinal state:\n", result['messages'][-1].content)
+
+result = graph.invoke(
+    {"messages": [
+        HumanMessage(content="what's the point of life?"),
     ]}
 )
 
