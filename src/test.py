@@ -219,7 +219,7 @@ print("\nFinal state:\n", result['messages'][-1].content)
 #  Visualise graph
 # ---------------------------------------------------------------------
 
-# png_bytes = graph.get_graph(xray=True).draw_mermaid_png(
-#     draw_method=MermaidDrawMethod.PYPPETEER
-# )
-# PILImage.open(BytesIO(png_bytes)).show()
+png_bytes = graph.get_graph(xray=True).draw_mermaid_png(
+    draw_method=MermaidDrawMethod.PYPPETEER
+)
+PILImage.open(BytesIO(png_bytes)).show()
