@@ -7,31 +7,40 @@ from langgraph.graph import StateGraph, START, END
 from langgraph.prebuilt import ToolNode
 from functools import partial
 from helpers import needs_tool
+from logger import log
 
 @tool
 def insights_tool() -> str:
     """Simulated insights tool."""
-    print("came to insights tool...")
+    log.info("came to insights tool...")
     return "No insights at this stage."
 
 TOOLS: List[Callable[..., Any]] = [
     insights_tool
 ]
 
-def sage(state: AgentState, llm: ChatOpenAI):
-    print("came to sage")
+async def sage(state: AgentState, llm: ChatOpenAI):
+    log.info("came to sage")
 
+    llm_with_tools = llm.bind_tools(TOOLS)
+    sys_msgs = [SystemMessage(content=f"""
+        Using the provided tools, process user's request.
+        """
+    )]
     last = state["messages"][-1]
 
     # 2nd pass (tool result already present) -----------------------------
     if isinstance(last, ToolMessage):
-        sys = SystemMessage(content="Using the provided tools, process user's request.")
-        final = llm.invoke([sys] + state["messages"])
-        return {"messages": [final], "next": "FINISH"}
+        reply = await llm_with_tools.ainvoke(sys_msgs + state["messages"])
+        more_tools_needed = bool(getattr(reply, "tool_calls", []))
+        
+        return {
+            "messages": [reply],
+            "next": None if more_tools_needed else "FINISH",
+        }
 
     # 1st pass (no tool result yet) --------------------------------------
-    sys = SystemMessage(content="Using the provided tools, process user's request.")
-    first = llm.bind_tools(TOOLS).invoke([sys] + state["messages"])
+    first = await llm_with_tools.ainvoke(sys_msgs + state["messages"])
     return {"messages": [first], "next": None}
 
 def get_graph(llm: ChatOpenAI):

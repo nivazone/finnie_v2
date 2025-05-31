@@ -9,6 +9,7 @@ from langgraph.graph import START, END, StateGraph
 from .scribe import get_graph as get_scribe_graph
 from .sage import get_graph as get_sage_graph
 from .fallback import fallback
+from logger import log
 
 MEMBERS = ["Scribe", "Sage", "Fallback"]
 OPTIONS = ["FINISH"] + MEMBERS
@@ -37,12 +38,13 @@ SUPERVISOR_PROMPT = (
 class Routes(BaseModel):
     next: Literal["FINISH", "Scribe", "Sage", "Fallback"]
 
-def supervisor(state: AgentState, llm: ChatOpenAI):
-    print("came to supervisor")
+async def supervisor(state: AgentState, llm: ChatOpenAI):
+    log.info("came to supervisor")
 
     if state.get("next") == "FINISH":
         return {"next": "FINISH"}
-    return (SUPERVISOR_PROMPT | llm.with_structured_output(Routes)).invoke(state)
+    
+    return await (SUPERVISOR_PROMPT | llm.with_structured_output(Routes)).ainvoke(state)
 
 def get_graph(llm: ChatOpenAI):
     wf = StateGraph(AgentState)

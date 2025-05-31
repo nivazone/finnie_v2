@@ -24,7 +24,7 @@ async def process(input_path: str):
     messages = [
         HumanMessage(content="process these new bank statements."),
     ]
-    result = graph.invoke(
+    result = await graph.ainvoke(
         {
             "messages": messages,
             "input_folder": input_path,
@@ -41,7 +41,7 @@ async def process(input_path: str):
     messages = [
         HumanMessage(content="Give me insights on last month's spending."),
     ]
-    result = result = graph.invoke(
+    result = await graph.ainvoke(
         {
             "messages": messages,
             "input_folder": input_path,
@@ -55,18 +55,18 @@ async def process(input_path: str):
     #  Test run 3
     # ---------------------------------------------------------------------
 
-    messages = [
-        HumanMessage(content="what's the capital of Mars?"),
-    ]
-    result = result = graph.invoke(
-        {
-            "messages": messages,
-            "input_folder": input_path,
-            "fatal_err": False,
-        }
-    )
+    # messages = [
+    #     HumanMessage(content="what's the capital of Mars?"),
+    # ]
+    # result = result = graph.invoke(
+    #     {
+    #         "messages": messages,
+    #         "input_folder": input_path,
+    #         "fatal_err": False,
+    #     }
+    # )
 
-    print("\n\nFinal result:\n", result['messages'][-1].content)
+    # print("\n\nFinal result:\n", result['messages'][-1].content)
 
 def draw_graph():
     llm = get_llm()

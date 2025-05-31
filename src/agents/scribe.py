@@ -22,9 +22,10 @@ TOOLS: List[Callable[..., Any]] = [
     parse_all_statements,
 ]
 
-def scribe(state: AgentState, llm: ChatOpenAI):
+async def scribe(state: AgentState, llm: ChatOpenAI):
     log.info("came to scribe")
 
+    llm_with_tools = llm.bind_tools(TOOLS)
     sys_msgs = [SystemMessage(content=f"""
         Process all available bank statements using the following workflow.
             1. get plain text version for each statement in the folder.
@@ -34,13 +35,18 @@ def scribe(state: AgentState, llm: ChatOpenAI):
     )]
     last = state["messages"][-1]
 
-    # 2nd pass (tool result already present) -----------------------------
+    # ── 2nd+ passes: we already have a ToolMessage result ────────────
     if isinstance(last, ToolMessage):
-        final = llm.invoke(sys_msgs + state["messages"])
-        return {"messages": [final], "next": "FINISH"}
+        reply = await llm_with_tools.ainvoke(sys_msgs + state["messages"])
+        more_tools_needed = bool(getattr(reply, "tool_calls", []))
+        
+        return {
+            "messages": [reply],
+            "next": None if more_tools_needed else "FINISH",
+        }
 
-    # 1st pass (no tool result yet) --------------------------------------
-    first = llm.bind_tools(TOOLS).invoke(sys_msgs + state["messages"])
+    # ── 1st pass: ask for a tool ─────────────────────────────────────
+    first = await llm_with_tools.ainvoke(sys_msgs + state["messages"])
     return {"messages": [first], "next": None}
 
 def get_graph(llm: ChatOpenAI):
