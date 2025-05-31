@@ -1,7 +1,7 @@
 import logging
 import sys
 
-def setup_logger(name="finnie", level=logging.INFO) -> logging.Logger:
+def setup_logger(name="Finnie", level=logging.INFO) -> logging.Logger:
     logger = logging.getLogger(name)
     logger.setLevel(level)
 
@@ -16,4 +16,4 @@ def setup_logger(name="finnie", level=logging.INFO) -> logging.Logger:
 
     return logger
 
-log = setup_logger("finnie")
+log = setup_logger("Finnie")

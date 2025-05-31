@@ -17,6 +17,9 @@ async def update_transaction_classification(classifications_ref: str) -> dict:
             {"fatal_err": False} on success,
             {"fatal_err": True} on failure
     """
+
+    log.info(f"[update_transaction_classification] updating classifications from {classifications_ref}...")
+
     try:
         data = get_item(classifications_ref)
         results = data.get("results", [])

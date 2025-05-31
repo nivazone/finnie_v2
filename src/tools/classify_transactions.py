@@ -8,7 +8,7 @@ from memory_store import get_item, put_item
 
 BATCH_SIZE = 50
 DELAY_BETWEEN_BATCHES = 1.0
-ENRICH_WITH_WEB_CONTEXT = True
+ENRICH_WITH_WEB_CONTEXT = False
 
 class Transaction(BaseModel):
     """Input model for a single transaction to classify."""
