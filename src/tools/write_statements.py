@@ -15,8 +15,6 @@ async def _write_statement(json_str: str, conn: AsyncConnection, cur: AsyncCurso
     Raises exception on failure.
     """
 
-    log.info(f"[_write_statement] saving to database...")
-
     parsed_data = json.loads(json_str)
 
     await cur.execute("""

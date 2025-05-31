@@ -20,6 +20,7 @@ from tools import (
 TOOLS: List[Callable[..., Any]] = [
     extract_all_texts,
     parse_all_statements,
+    write_all_statements,
 ]
 
 async def scribe(state: AgentState, llm: ChatOpenAI):
@@ -29,7 +30,8 @@ async def scribe(state: AgentState, llm: ChatOpenAI):
     sys_msgs = [SystemMessage(content=f"""
         Process all available bank statements using the following workflow.
             1. get plain text version for each statement in the folder.
-            2. parse each plain text version so that you can get a JSON version.               
+            2. parse each plain text version so that you can get a JSON version.
+            3. save each statement JSON to database for future use.
         Statements are located at {state["input_folder"]}.
         """
     )]
