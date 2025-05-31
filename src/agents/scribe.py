@@ -7,31 +7,45 @@ from langchain_core.tools import tool
 from typing import Any, Callable, List
 from state import AgentState
 from helpers import needs_tool
+from logger import log
+from tools import (
+    extract_all_texts,
+    parse_all_statements,
+    read_transactions,
+    update_transaction_classification,
+    classify_transactions,
+    write_all_statements
+)
 
-@tool
-def document_processor_tool() -> str:
-    """Simulated document processor tool."""
-    print("came to document processor tool...")
-    return "All done."
+# @tool
+# def document_processor_tool() -> str:
+#     """Simulated document processor tool."""
+#     print("came to document processor tool...")
+#     return "All done."
 
 TOOLS: List[Callable[..., Any]] = [
-    document_processor_tool
+    extract_all_texts
 ]
 
 def scribe(state: AgentState, llm: ChatOpenAI):
-    print("came to scribe")
+    log.info("came to scribe")
 
+    sys_msgs = [SystemMessage(content=f"""
+        Process all available bank statements using the following workflow.
+            1. get plain text version for each statement in the folder.
+                              
+        Statements are located at {state["input_folder"]}.
+        """
+    )]
     last = state["messages"][-1]
 
     # 2nd pass (tool result already present) -----------------------------
     if isinstance(last, ToolMessage):
-        sys = SystemMessage(content="Using the provided tools, process user's request.")
-        final = llm.invoke([sys] + state["messages"])
+        final = llm.invoke(sys_msgs + state["messages"])
         return {"messages": [final], "next": "FINISH"}
 
     # 1st pass (no tool result yet) --------------------------------------
-    sys = SystemMessage(content="Use provided tools to process user's request, then stop.")
-    first = llm.bind_tools(TOOLS).invoke([sys] + state["messages"])
+    first = llm.bind_tools(TOOLS).invoke(sys_msgs + state["messages"])
     return {"messages": [first], "next": None}
 
 def get_graph(llm: ChatOpenAI):

@@ -30,7 +30,7 @@ def sage(state: AgentState, llm: ChatOpenAI):
         return {"messages": [final], "next": "FINISH"}
 
     # 1st pass (no tool result yet) --------------------------------------
-    sys = SystemMessage(content="Use provided tools to process user's request, then stop.")
+    sys = SystemMessage(content="Using the provided tools, process user's request.")
     first = llm.bind_tools(TOOLS).invoke([sys] + state["messages"])
     return {"messages": [first], "next": None}
 
