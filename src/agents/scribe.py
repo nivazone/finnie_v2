@@ -17,14 +17,9 @@ from tools import (
     write_all_statements
 )
 
-# @tool
-# def document_processor_tool() -> str:
-#     """Simulated document processor tool."""
-#     print("came to document processor tool...")
-#     return "All done."
-
 TOOLS: List[Callable[..., Any]] = [
-    extract_all_texts
+    extract_all_texts,
+    parse_all_statements,
 ]
 
 def scribe(state: AgentState, llm: ChatOpenAI):
@@ -33,7 +28,7 @@ def scribe(state: AgentState, llm: ChatOpenAI):
     sys_msgs = [SystemMessage(content=f"""
         Process all available bank statements using the following workflow.
             1. get plain text version for each statement in the folder.
-                              
+            2. parse each plain text version so that you can get a JSON version.               
         Statements are located at {state["input_folder"]}.
         """
     )]
