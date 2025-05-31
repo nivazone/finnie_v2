@@ -45,10 +45,12 @@ async def scribe(state: AgentState, llm: ChatOpenAI):
 
     if is_fatal:
         log.fatal("[scribe] fatal error detected. Ending further processing.")
-        sys_msg = SystemMessage(content="""
+        err_details = state.get("err_details", "No details provided.")
+        sys_msg = SystemMessage(content=f"""
             A fatal error occurred during processing.
             Retrying is not possible.
             Explain the error briefly and end the conversation.
+            Error details: {err_details}
         """)
         reply = await llm_with_tools.ainvoke([sys_msg] + state["messages"])
         return {"messages": [reply], "next": "FINISH"}

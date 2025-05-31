@@ -110,11 +110,17 @@ async def write_all_statements(parsed_refs: list[str]) -> dict:
                     except Exception as e:
                         log.error(f"[write_all_statements] failed on index {i} (ref {ref_id}): {e}")
                         await conn.rollback()
-                        return {"fatal_err": True}
+                        return {
+                            "fatal_err": True,
+                            "err_details": str(e)
+                        }
 
                 await conn.commit()
                 return {"fatal_err": False}
 
     except Exception as e:
         log.error(f"[write_all_statements] unknown failure: {e}")
-        return {"fatal_err": True}
+        return {
+            "fatal_err": True,
+            "err_details": str(e)
+        }

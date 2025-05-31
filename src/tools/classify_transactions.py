@@ -125,4 +125,7 @@ async def classify_transactions(transactions_ref: str) -> dict:
 
     except Exception as e:
         log.error(f"[classify_transactions] Failed to classify transactions: {e}")
-        return {"fatal_err": True}
+        return {
+            "fatal_err": True,
+            "err_details": str(e)
+        }

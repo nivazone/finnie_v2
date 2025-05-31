@@ -44,11 +44,17 @@ async def update_transaction_classification(classifications_ref: str) -> dict:
                     except Exception as e:
                         log.error(f"[update_transaction_classification] failed on item {i}: {e}")
                         await conn.rollback()
-                        return {"fatal_err": True}
+                        return {
+                            "fatal_err": True,
+                            "err_details": str(e)
+                        }
 
                 await conn.commit()
                 return {"fatal_err": False}
 
     except Exception as e:
         log.error(f"[update_transaction_classification] unknown error: {e}")
-        return {"fatal_err": True}
+        return {
+            "fatal_err": True,
+            "err_details": str(e)
+        }
