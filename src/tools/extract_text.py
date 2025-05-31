@@ -14,8 +14,6 @@ def _extract_text(path: str) -> dict:
     Returns:
         dict: {"extracted_text": "...", "fatal_err": False} or {"fatal_err": True}
     """
-
-    log.info(f"[_extract_text] extracting text from {path}...")
     
     output = ""
     
@@ -69,4 +67,7 @@ def extract_all_texts(folder_path: str) -> dict:
 
     except Exception as e:
         log.error(f"[extract_all_texts_from_folder] Fatal error: {e}")
-        return {"fatal_err": True}
+        return {
+            "fatal_err": True,
+            "err_details": str(e)
+        }

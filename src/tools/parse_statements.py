@@ -82,11 +82,6 @@ async def parse_all_statements(ref_ids: List[str]) -> dict:
         try:
             raw_text = get_item(ref_id)
             result = await _parse_statement_text(raw_text)
-
-            if result.get("fatal_err"):
-                log.error(f"[parse_all_statements] fatal error during parsing at index {i}")
-                return {"fatal_err": True}
-
             parsed_ref = put_item({"parsed_text": result["parsed_text"]})
             parsed_refs.append(parsed_ref)
 
@@ -95,7 +90,10 @@ async def parse_all_statements(ref_ids: List[str]) -> dict:
 
         except Exception as e:
             log.error(f"[parse_all_statements] exception at index {i}: {e}")
-            return {"fatal_err": True}
+            return {
+                "fatal_err": True,
+                "err_details": str(e)
+            }
 
     return {"parsed_refs": parsed_refs, "fatal_err": False}
     

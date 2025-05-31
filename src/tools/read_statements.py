@@ -83,4 +83,7 @@ async def read_transactions(start_date: Optional[str] = None, end_date: Optional
 
     except Exception as e:
         log.error(f"[read_transactions] failed to read transactions: {e}")
-        return {"fatal_err": True}
+        return {
+            "fatal_err": True,
+            "err_details": str(e)
+        }
