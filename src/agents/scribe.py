@@ -3,10 +3,9 @@ from langchain_openai import ChatOpenAI
 from langgraph.graph import StateGraph, START, END
 from langgraph.prebuilt import ToolNode
 from functools import partial
-from langchain_core.tools import tool
 from typing import Any, Callable, List
 from state import AgentState
-from helpers import needs_tool
+from helpers import needs_tool, update_state
 from logger import log
 from tools import (
     extract_all_texts,
@@ -21,10 +20,13 @@ TOOLS: List[Callable[..., Any]] = [
     extract_all_texts,
     parse_all_statements,
     write_all_statements,
+    read_transactions,
+    update_transaction_classification,
+    classify_transactions,
 ]
 
 async def scribe(state: AgentState, llm: ChatOpenAI):
-    log.info("came to scribe")
+    log.info(f"came to scribe, fatal_err={state.get('fatal_err', False)}")
 
     llm_with_tools = llm.bind_tools(TOOLS)
     sys_msgs = [SystemMessage(content=f"""
@@ -32,9 +34,25 @@ async def scribe(state: AgentState, llm: ChatOpenAI):
             1. get plain text version for each statement in the folder.
             2. parse each plain text version so that you can get a JSON version.
             3. save each statement JSON to database for future use.
+            4. wait for each statement to finish parsing and saving to database before proceeding further
+            5. once all statements are parsed and saved to database, get all transactions from the database for each statement and classify them using classify transactions tool.
+            6. update the transaction classification in database.
         Statements are located at {state["input_folder"]}.
         """
     )]
+
+    is_fatal = state.get('fatal_err', False)
+
+    if is_fatal:
+        log.fatal("[scribe] fatal error detected. Ending further processing.")
+        sys_msg = SystemMessage(content="""
+            A fatal error occurred during processing.
+            Retrying is not possible.
+            Explain the error briefly and end the conversation.
+        """)
+        reply = await llm_with_tools.ainvoke([sys_msg] + state["messages"])
+        return {"messages": [reply], "next": "FINISH"}
+
     last = state["messages"][-1]
 
     # ── 2nd+ passes: we already have a ToolMessage result ────────────
@@ -61,6 +79,7 @@ def get_graph(llm: ChatOpenAI):
 
     wf.add_node("Scribe", partial(scribe, llm=llm))
     wf.add_node("ScribeTools", ToolNode(TOOLS))
+    wf.add_node("UpdateState", update_state)
 
     wf.add_edge(START, "Scribe")
     wf.add_conditional_edges(
@@ -71,6 +90,7 @@ def get_graph(llm: ChatOpenAI):
                 END: END
             },
     )
-    wf.add_edge("ScribeTools", "Scribe")
+    wf.add_edge("ScribeTools", "UpdateState")
+    wf.add_edge("UpdateState", "Scribe")
 
     return wf.compile()
