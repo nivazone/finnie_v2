@@ -41,8 +41,8 @@ async def process(input_path: str):
     messages = [
         HumanMessage(content="""
             Give me insights on my spending.
-            Tell me how much I spent on groceries and what was the biggest transaction?
-            Describe the biggest transaction in detail.
+            Tell me how much I spent on groceries and what was the category I spent most?
+            Describe the make up of those transactions.
         """),
     ]
     result = await graph.ainvoke(

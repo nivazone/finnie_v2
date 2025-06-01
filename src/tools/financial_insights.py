@@ -2,11 +2,11 @@ from pydantic import BaseModel, Field
 from langchain_core.tools import tool
 from langchain_core.messages import SystemMessage, HumanMessage
 from psycopg.rows import dict_row
-import json
-import textwrap
+import json, textwrap, traceback, asyncio
 from dependencies import get_llm, get_db_pool
 from logger import log
 
+MAX_RETRIES = 5
 SCHEMA_HINT = textwrap.dedent("""\
     ### Tables
     transactions(id, statement_id, transaction_date, transaction_details, amount, category)
@@ -19,6 +19,33 @@ class SQLSpec(BaseModel):
     sql: str = Field(
         description="A single SELECT statement that answers the user question."
     )
+
+def _get_sys_msg() -> SystemMessage:
+    return SystemMessage(content=f"""
+        Use the tables below to answer the user question **by emitting a single SQL SELECT statement** wrapped in JSON that matches the `SQLSpec` schema.
+
+        ### Rules (follow strictly):
+        1.  For comparing categories, use the following predefinied categories:
+            - Groceries
+            - Transport
+            - Household Bills
+            - Entertainment
+            - Subscriptions
+            - Healthcare
+            - Dining
+            - Vet & Pet Care
+            - Shopping
+            - Travel
+            - Unknown
+            
+        2.  In this data set, expenses/outflows have POSITIVE amounts, income/inflows have NEGATIVE amounts.
+        3.  When a month or year is mentioned, filter `DATE_TRUNC('month', transaction_date) = DATE '2025-04-01'` etc.
+        4.  When asked for *largest/biggest transactions*, user is intersted in the largest outflows (expenses), which are positive amounts, ignore the negative amounts since they are inflows.
+        5.  Transactions that says "ONLINE PAYMENT SYDNEY NS" are cerdit card payments made to the bank by the user, therefore they are not expenses.
+        6.  Never modify the schema; only use listed tables/columns.
+
+        {SCHEMA_HINT}
+    """)
 
 @tool
 async def get_financial_insights(question: str) -> dict:
@@ -46,69 +73,61 @@ async def get_financial_insights(question: str) -> dict:
             } on failure. 
     """
 
-    try:
-        pool = get_db_pool()
-        plain_llm = get_llm()
-        structured_llm = get_llm().with_structured_output(SQLSpec)
+
         
-        sys_msgs = [SystemMessage(content=f"""
-            Use the tables below to answer the user question **by emitting a single SQL SELECT statement** wrapped in JSON that matches the `SQLSpec` schema.
+    error_feedback: str | None = None
 
-            ### Domain rules (follow strictly):
-            1.  For comparing categories, use the following predefinied categories:
-                - Groceries
-                - Transport
-                - Household Bills
-                - Entertainment
-                - Subscriptions
-                - Healthcare
-                - Dining
-                - Vet & Pet Care
-                - Shopping
-                - Travel
-                - Unknown
-                
-            2.  In this data set, expenses/outflows have POSITIVE amounts, income/inflows have NEGATIVE amounts.
-            3.  When a month or year is mentioned, filter `DATE_TRUNC('month', transaction_date) = DATE '2025-04-01'` etc.
-            4.  When asked for *largest/biggest transactions*, user is intersted in the largest outflows (expenses), which are positive amounts, ignore the negative amounts since they are inflows.
-            5.  Never modify the schema; only use listed tables/columns.
+    for attempt in range(1, MAX_RETRIES + 1):
+        try:
+            pool = get_db_pool()
+            plain_llm = get_llm()
+            structured_llm = get_llm().with_structured_output(SQLSpec)
 
-            {SCHEMA_HINT}
-        """)]
+            # 1) Ask for SQL (include feedback from previous attempt if any)
+            msgs = [_get_sys_msg(), HumanMessage(content=question)]
+            
+            if error_feedback:
+                msgs.append(HumanMessage(content=f"""
+                    Previous attempt failed:\n{error_feedback}\n
+                    Please correct the SQL and try again.
+                """))
 
-        user_msgs = [HumanMessage(content=question)]
-        sql_spec = await structured_llm.ainvoke(sys_msgs + user_msgs)
+            spec: SQLSpec = await structured_llm.ainvoke(msgs)
+            
+            log.info(f"[financial_insights] Attempt {attempt} SQL:\n{spec.sql}")
+        
+            # 2) Run the query
+            async with pool.connection() as conn:
+                async with conn.cursor(row_factory=dict_row) as cur:
+                    await cur.execute(spec.sql)          # type: ignore[arg-type]
+                    rows = await cur.fetchall()
 
-        log.info(f"[financial_insights] generated SQL: {sql_spec}")
+            if not rows:
+                raise ValueError("Query executed but returned zero rows.")
 
-        async with pool.connection() as conn:
-            async with conn.cursor(row_factory=dict_row) as cur:
-                await cur.execute(sql_spec.sql) # type: ignore[arg-type]
-                rows = await cur.fetchall()
+            # 3) Turn rows into narrative
+            explain_msgs = [
+                SystemMessage(content="Explain the query results clearly and concisely in plain English."),
+                HumanMessage(content=f"""
+                    Question: {question}\n
+                    Result rows (JSON):\n
+                    {json.dumps(rows, default=str)[:10_000]}
+                """)]
+            narrative = await plain_llm.ainvoke(explain_msgs)
+            log.info("[financial_insights] LLM narrative: %s", narrative.content)
 
-                sys_msgs = [SystemMessage(content="""
-                        Explain the query results clearly and concisely.
-                        Answer should be in plain English.
-                    """)]
-                user_msgs = [HumanMessage(content=f"""
-                        Question: {question}
-                        Result rows (JSON):
-                        {json.dumps(rows, default=str)[:10_000]}
-                    """)]
-                
-                reply = await plain_llm.ainvoke(sys_msgs + user_msgs)
-
-                log.info(f"[financial_insights] LLM reply: {reply.content}")
-
-                return {
-                    "response": reply.content,
-                    "fatal_err": False  
-                }
-                
+            return {
+                "response": narrative.content,
+                "fatal_err": False  
+            }
     
-    except Exception as e:
-        log.error(f"[financial_insights] Failed to get insights: {e}")
-        return {
-            "fatal_err": True, 
-            "err_details": str(e)
-        }
+        except Exception as e:
+            tb = traceback.format_exception_only(type(e), e)[-1].strip()
+            error_feedback = tb
+            log.warning(f"[financial_insights] Attempt {attempt} failed: {tb}")
+
+            if attempt == MAX_RETRIES:
+                return {
+                    "fatal_err": True,
+                    "err_details": f"All {MAX_RETRIES} attempts failed: {tb}"
+                }
