@@ -6,22 +6,16 @@ from state import AgentState
 from langgraph.graph import StateGraph, START, END
 from langgraph.prebuilt import ToolNode
 from functools import partial
-import json
+from tools import get_financial_insights
 from helpers import needs_tool, update_state
 from logger import log
 
-@tool
-def insights_tool() -> str:
-    """Simulated insights tool."""
-    log.info("came to insights tool...")
-    return "No insights at this stage."
-
 TOOLS: List[Callable[..., Any]] = [
-    insights_tool
+    get_financial_insights
 ]
 
 async def sage(state: AgentState, llm: ChatOpenAI):
-    log.info("came to sage")
+    log.info(f"Came to Sage, fatal_err={state.get('fatal_err', False)}")
 
     llm_with_tools = llm.bind_tools(TOOLS)
     sys_msgs = [SystemMessage(content=f"""
@@ -32,11 +26,14 @@ async def sage(state: AgentState, llm: ChatOpenAI):
     is_fatal = state.get('fatal_err', False)
 
     if is_fatal:
-        log.fatal("[Sage] fatal error detected. Ending further processing.")
-        sys_msg = SystemMessage(content="""
+        log.fatal("[Sage] Fatal error detected. Ending further processing.")
+        err_details = state.get("err_details", "No details provided.")
+        sys_msg = SystemMessage(content=f"""
             A fatal error occurred during processing.
             Retrying is not possible.
             Explain the error briefly and end the conversation.
+            Explain the error briefly and end the conversation.
+            Error details: {err_details}
         """)
         reply = await llm_with_tools.ainvoke([sys_msg] + state["messages"])
         return {"messages": [reply], "next": "FINISH"}

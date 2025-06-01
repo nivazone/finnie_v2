@@ -26,7 +26,7 @@ TOOLS: List[Callable[..., Any]] = [
 ]
 
 async def scribe(state: AgentState, llm: ChatOpenAI):
-    log.info(f"came to scribe, fatal_err={state.get('fatal_err', False)}")
+    log.info(f"Came to Scribe, fatal_err={state.get('fatal_err', False)}")
 
     llm_with_tools = llm.bind_tools(TOOLS)
     sys_msgs = [SystemMessage(content=f"""
@@ -44,7 +44,7 @@ async def scribe(state: AgentState, llm: ChatOpenAI):
     is_fatal = state.get('fatal_err', False)
 
     if is_fatal:
-        log.fatal("[scribe] fatal error detected. Ending further processing.")
+        log.fatal("[Scribe] Fatal error detected. Ending further processing.")
         err_details = state.get("err_details", "No details provided.")
         sys_msg = SystemMessage(content=f"""
             A fatal error occurred during processing.

@@ -37,14 +37,16 @@ Finnie is an AI-powered agent that automates the extraction, parsing, classifica
 - Tavily API key (for web search)
 
 Install dependencies:
+
 ```sh
 pip install -r requirements.txt
 ```
 
 ## TODO
 
-- Add chache to minimise search queries
 - Conversational Financial Assistant
+- Add streaming
+- Add conversation memory
 - LLM-Based Anomaly Detector
 - Generate human-readable summaries of monthly/quarterly spending.
 - Natural-Language Categorization Rules, Allow user to define logic like: “Put all Uber rides under Transport” or“Flag anything with ‘crypto’ as High Risk”

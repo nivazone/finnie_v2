@@ -4,6 +4,7 @@ from .write_statements import write_all_statements
 from .read_statements import read_transactions
 from .update_transaction_classification import update_transaction_classification
 from .classify_transactions import classify_transactions
+from .financial_insights import get_financial_insights
 
 __all__ = [
     "extract_all_texts",
@@ -11,5 +12,6 @@ __all__ = [
     "write_all_statements",
     "read_transactions",
     "update_transaction_classification",
-    "classify_transactions"
+    "classify_transactions",
+    "get_financial_insights"
 ]
