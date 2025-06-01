@@ -21,25 +21,29 @@ async def process(input_path: str):
     #  Test run 1
     # ---------------------------------------------------------------------
 
-    messages = [
-        HumanMessage(content="process these new bank statements."),
-    ]
-    result = await graph.ainvoke(
-        {
-            "messages": messages,
-            "input_folder": input_path,
-            "fatal_err": False,
-        }
-    )
+    # messages = [
+    #     HumanMessage(content="process these new bank statements."),
+    # ]
+    # result = await graph.ainvoke(
+    #     {
+    #         "messages": messages,
+    #         "input_folder": input_path,
+    #         "fatal_err": False,
+    #     }
+    # )
 
-    print("\n\nFinal result:\n", result['messages'][-1].content)
+    # print("\n\nFinal result:\n", result['messages'][-1].content)
 
     # ---------------------------------------------------------------------
     #  Test run 2
     # ---------------------------------------------------------------------
 
     messages = [
-        HumanMessage(content="Give me insights on last month's spending."),
+        HumanMessage(content="""
+            Give me insights on my spending.
+            Tell me how much I spent on groceries and what was the biggest transaction?
+            Describe the biggest transaction in detail.
+        """),
     ]
     result = await graph.ainvoke(
         {

@@ -39,7 +39,7 @@ class Routes(BaseModel):
     next: Literal["FINISH", "Scribe", "Sage", "Fallback"]
 
 async def supervisor(state: AgentState, llm: ChatOpenAI):
-    log.info("came to supervisor")
+    log.info("Came to Supervisor")
 
     if state.get("next") == "FINISH":
         return {"next": "FINISH"}
