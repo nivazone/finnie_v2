@@ -52,9 +52,27 @@ async def get_financial_insights(question: str) -> dict:
         structured_llm = get_llm().with_structured_output(SQLSpec)
         
         sys_msgs = [SystemMessage(content=f"""
-            Use the provided database schema to answer user questions.
-            Return ONLY JSON exactly matching the schema.
-            Use the database schema below.
+            Use the tables below to answer the user question **by emitting a single SQL SELECT statement** wrapped in JSON that matches the `SQLSpec` schema.
+
+            ### Domain rules (follow strictly):
+            1.  For comparing categories, use the following predefinied categories:
+                - Groceries
+                - Transport
+                - Household Bills
+                - Entertainment
+                - Subscriptions
+                - Healthcare
+                - Dining
+                - Vet & Pet Care
+                - Shopping
+                - Travel
+                - Unknown
+                
+            2.  In this data set, expenses/outflows have POSITIVE amounts, income/inflows have NEGATIVE amounts.
+            3.  When a month or year is mentioned, filter `DATE_TRUNC('month', transaction_date) = DATE '2025-04-01'` etc.
+            4.  When asked for *largest/biggest transactions*, user is intersted in the largest outflows (expenses), which are positive amounts, ignore the negative amounts since they are inflows.
+            5.  Never modify the schema; only use listed tables/columns.
+
             {SCHEMA_HINT}
         """)]
 
