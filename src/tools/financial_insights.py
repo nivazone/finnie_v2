@@ -3,7 +3,7 @@ from langchain_core.tools import tool
 from langchain_core.messages import SystemMessage, HumanMessage
 from psycopg.rows import dict_row
 import json, textwrap, traceback, asyncio
-from dependencies import get_llm, get_db_pool
+from dependencies import get_financial_insights_llm, get_db_pool
 from logger import log
 
 MAX_RETRIES = 5
@@ -80,8 +80,8 @@ async def get_financial_insights(question: str) -> dict:
     for attempt in range(1, MAX_RETRIES + 1):
         try:
             pool = get_db_pool()
-            plain_llm = get_llm()
-            structured_llm = get_llm().with_structured_output(SQLSpec)
+            plain_llm = get_financial_insights_llm()
+            structured_llm = get_financial_insights_llm().with_structured_output(SQLSpec)
 
             # 1) Ask for SQL (include feedback from previous attempt if any)
             msgs = [_get_sys_msg(), HumanMessage(content=question)]

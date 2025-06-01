@@ -3,8 +3,6 @@ from langchain_openai import ChatOpenAI
 from state import AgentState
 
 def fallback(state: AgentState, llm: ChatOpenAI):
-    print("came to fallback")
-
     sys = SystemMessage(
         content="""
             The request doesn’t match any available agents capabilities.
