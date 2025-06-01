@@ -7,6 +7,7 @@ from typing import Any, Callable, List
 from state import AgentState
 from helpers import needs_tool, update_state
 from logger import log
+from dependencies import get_llm
 from tools import (
     extract_all_texts,
     parse_all_statements,
@@ -25,9 +26,10 @@ TOOLS: List[Callable[..., Any]] = [
     classify_transactions,
 ]
 
-async def scribe(state: AgentState, llm: ChatOpenAI):
+async def scribe(state: AgentState):
     log.info(f"Came to Scribe, fatal_err={state.get('fatal_err', False)}")
 
+    llm: ChatOpenAI = get_llm(streaming=False)
     llm_with_tools = llm.bind_tools(TOOLS)
     sys_msgs = [SystemMessage(content=f"""
         Process all available bank statements using the following workflow.
@@ -71,7 +73,7 @@ async def scribe(state: AgentState, llm: ChatOpenAI):
     first = await llm_with_tools.ainvoke(sys_msgs + state["messages"])
     return {"messages": [first], "next": None}
 
-def get_graph(llm: ChatOpenAI):
+def get_graph():
     """
     Return a runnable graph whose entry node is Scribe and whose
     terminal node sets next='FINISH'.
@@ -79,7 +81,7 @@ def get_graph(llm: ChatOpenAI):
     
     wf = StateGraph(AgentState)
 
-    wf.add_node("Scribe", partial(scribe, llm=llm))
+    wf.add_node("Scribe", scribe)
     wf.add_node("ScribeTools", ToolNode(TOOLS))
     wf.add_node("UpdateState", update_state)
 

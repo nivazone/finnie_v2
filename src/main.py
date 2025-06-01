@@ -13,67 +13,6 @@ from config import get_settings
 from logger import log
 from dependencies import get_llm, init_db_pool, close_db_pool
 
-# @traceable(name="finnie")
-# async def process(input_path: str):
-#     llm = get_llm()
-#     graph = get_graph(llm)
-
-#     # ---------------------------------------------------------------------
-#     #  Test run 1
-#     # ---------------------------------------------------------------------
-
-#     # messages = [
-#     #     HumanMessage(content="process these new bank statements."),
-#     # ]
-#     # result = await graph.ainvoke(
-#     #     {
-#     #         "messages": messages,
-#     #         "input_folder": input_path,
-#     #         "fatal_err": False,
-#     #     }
-#     # )
-
-#     # print("\n\nFinal result:\n", result['messages'][-1].content)
-
-#     # ---------------------------------------------------------------------
-#     #  Test run 2
-#     # ---------------------------------------------------------------------
-
-#     # messages = [
-#     #     HumanMessage(content="""
-#     #         Give me insights on my spending.
-#     #         Tell me how much I spent on groceries and what was the category I spent most?
-#     #         Describe the make up of those transactions.
-#     #     """),
-#     # ]
-#     # result = await graph.ainvoke(
-#     #     {
-#     #         "messages": messages,
-#     #         "input_folder": input_path,
-#     #         "fatal_err": False,
-#     #         "err_details": None,
-#     #     }
-#     # )
-
-#     # print("\n\nFinal result:\n", result['messages'][-1].content)
-
-#     # ---------------------------------------------------------------------
-#     #  Test run 3
-#     # ---------------------------------------------------------------------
-
-#     # messages = [
-#     #     HumanMessage(content="what's the capital of Mars?"),
-#     # ]
-#     # result = result = graph.invoke(
-#     #     {
-#     #         "messages": messages,
-#     #         "input_folder": input_path,
-#     #         "fatal_err": False,
-#     #     }
-#     # )
-
-#     # print("\n\nFinal result:\n", result['messages'][-1].content)
-
 def draw_graph():
     llm = get_llm()
     graph = get_graph(llm)
@@ -82,19 +21,6 @@ def draw_graph():
         draw_method=MermaidDrawMethod.PYPPETEER
     )
     PILImage.open(BytesIO(png_bytes)).show()
-
-# async def main():
-#     try:
-#         logging.getLogger("pdfminer").setLevel(logging.ERROR)
-#         load_dotenv()
-#         s = get_settings()
-        
-#         await init_db_pool()
-        
-#         await process(s.INPUT_FOLDER)    
-
-#     finally:
-#         await init_db_pool()
 
 @traceable(name="Finnie")
 async def chat():
@@ -105,8 +31,7 @@ async def chat():
     try:
         # 1. initialise DB + streaming LLM + graph
         await init_db_pool()
-        llm_streaming = get_llm(streaming=True) 
-        graph = get_graph(llm_streaming)
+        graph = get_graph()
 
         # 2. keep the whole running chat history
         messages: list = []

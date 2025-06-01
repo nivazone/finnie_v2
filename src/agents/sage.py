@@ -8,15 +8,17 @@ from langgraph.prebuilt import ToolNode
 from functools import partial
 from tools import get_financial_insights
 from helpers import needs_tool, update_state
+from dependencies import get_llm
 from logger import log
 
 TOOLS: List[Callable[..., Any]] = [
     get_financial_insights
 ]
 
-async def sage(state: AgentState, llm: ChatOpenAI):
+async def sage(state: AgentState):
     log.info(f"Came to Sage, fatal_err={state.get('fatal_err', False)}")
 
+    llm: ChatOpenAI = get_llm(streaming=True)
     llm_with_tools = llm.bind_tools(TOOLS)
     sys_msgs = [SystemMessage(content=f"""
         Using the provided tools, process user's request.
@@ -62,7 +64,7 @@ def get_graph(llm: ChatOpenAI):
 
     wf = StateGraph(AgentState)
 
-    wf.add_node("Sage", partial(sage, llm=llm))
+    wf.add_node("Sage", sage)
     wf.add_node("SageTools", ToolNode(TOOLS))
     wf.add_node("UpdateState", update_state)
     
