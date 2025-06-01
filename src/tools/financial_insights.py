@@ -48,7 +48,9 @@ async def get_financial_insights(question: str) -> dict:
 
     try:
         pool = get_db_pool()
-        llm = get_llm().with_structured_output(SQLSpec)
+        plain_llm = get_llm()
+        structured_llm = get_llm().with_structured_output(SQLSpec)
+        
         sys_msgs = [SystemMessage(content=f"""
             Use the provided database schema to answer user questions.
             Return ONLY JSON exactly matching the schema.
@@ -57,10 +59,9 @@ async def get_financial_insights(question: str) -> dict:
         """)]
 
         user_msgs = [HumanMessage(content=question)]
-        reply = await llm.ainvoke(sys_msgs + user_msgs)
-        sql_spec = SQLSpec.model_validate_json(reply["content"])
+        sql_spec = await structured_llm.ainvoke(sys_msgs + user_msgs)
 
-        log.info(f"[financial_insights] generated SQL: {sql_spec.sql}")
+        log.info(f"[financial_insights] generated SQL: {sql_spec}")
 
         async with pool.connection() as conn:
             async with conn.cursor(row_factory=dict_row) as cur:
@@ -77,15 +78,18 @@ async def get_financial_insights(question: str) -> dict:
                         {json.dumps(rows, default=str)[:10_000]}
                     """)]
                 
-                reply = await llm.ainvoke(sys_msgs + user_msgs)
+                reply = await plain_llm.ainvoke(sys_msgs + user_msgs)
+
+                log.info(f"[financial_insights] LLM reply: {reply.content}")
 
                 return {
-                    "response": reply["content"],
+                    "response": reply.content,
                     "fatal_err": False  
                 }
                 
     
     except Exception as e:
+        log.error(f"[financial_insights] Failed to get insights: {e}")
         return {
             "fatal_err": True, 
             "err_details": str(e)

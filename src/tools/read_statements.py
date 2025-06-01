@@ -32,7 +32,7 @@ async def read_transactions(start_date: Optional[str] = None, end_date: Optional
             } on failure.
     """
     
-    log.info(f"[read_transactions] reading transactions from DB...")
+    log.info(f"[read_transactions] Reading transactions from DB...")
 
     try:
         pool = get_db_pool()
@@ -82,7 +82,7 @@ async def read_transactions(start_date: Optional[str] = None, end_date: Optional
                 return {"transactions_ref": ref_id, "fatal_err": False}
 
     except Exception as e:
-        log.error(f"[read_transactions] failed to read transactions: {e}")
+        log.error(f"[read_transactions] Failed to read transactions: {e}")
         return {
             "fatal_err": True,
             "err_details": str(e)
