@@ -10,6 +10,7 @@ from .scribe import get_graph as get_scribe_graph
 from .sage import get_graph as get_sage_graph
 from .fallback import fallback
 from logger import log
+from dependencies import get_llm
 
 MEMBERS = ["Scribe", "Sage", "Fallback"]
 OPTIONS = ["FINISH"] + MEMBERS
@@ -38,7 +39,8 @@ SUPERVISOR_PROMPT = (
 class Routes(BaseModel):
     next: Literal["FINISH", "Scribe", "Sage", "Fallback"]
 
-async def supervisor(state: AgentState, llm: ChatOpenAI):
+async def supervisor(state: AgentState):
+    llm = get_llm(streaming=False)
     log.info("Came to Supervisor")
 
     if state.get("next") == "FINISH":
@@ -46,15 +48,15 @@ async def supervisor(state: AgentState, llm: ChatOpenAI):
     
     return await (SUPERVISOR_PROMPT | llm.with_structured_output(Routes)).ainvoke(state)
 
-def get_graph(llm: ChatOpenAI):
+def get_graph():
+    llm = get_llm(streaming=False)
     wf = StateGraph(AgentState)
-
-    wf.add_node("Supervisor", partial(supervisor, llm=llm))
-    wf.add_node("Scribe", get_scribe_graph(llm))
+    wf.add_node("Supervisor", supervisor)
+    wf.add_node("Scribe", get_scribe_graph())
     wf.add_node("Sage", get_sage_graph(llm))
     wf.add_node("Fallback", partial(
         lambda st: {
-            "messages": fallback(st, llm)["messages"],
+            "messages": fallback(st)["messages"],
             "next": "FINISH"
         }))
 

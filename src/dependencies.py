@@ -4,16 +4,46 @@ from config import get_settings
 from functools import lru_cache
 from psycopg_pool import AsyncConnectionPool
 from search_providers import TavilySearchClient, SerperSearchClient, SearchProvider
+from langchain.callbacks.streaming_stdout import StreamingStdOutCallbackHandler
 
 @lru_cache(maxsize=1)
-def get_llm() -> ChatOpenAI:
+def get_llm(
+    streaming: bool = False,
+    callbacks: list | None = None,
+) -> ChatOpenAI:
     s = get_settings()
 
     return ChatOpenAI(
         model=s.MODEL_NAME,
         base_url=s.OPENAI_BASE_URL,
-        api_key=SecretStr(s.OPENAI_API_KEY) if s.OPENAI_API_KEY is not None else None,
+        api_key=s.OPENAI_API_KEY or None,
+        temperature=0,
+        streaming=streaming,
+        callbacks=callbacks or ([] if not streaming else [StreamingStdOutCallbackHandler()]),
     )
+
+@lru_cache(maxsize=1)
+def get_financial_insights_llm() -> ChatOpenAI:
+    s = get_settings()
+
+    return ChatOpenAI(
+        model=s.FINANCIAL_INSIGHTS_MODEL_NAME,
+        base_url=s.OPENAI_BASE_URL,
+        api_key=s.OPENAI_API_KEY or None,
+        temperature=0,
+    )
+
+
+
+
+# def get_llm() -> ChatOpenAI:
+#     s = get_settings()
+
+#     return ChatOpenAI(
+#         model=s.MODEL_NAME,
+#         base_url=s.OPENAI_BASE_URL,
+#         api_key=SecretStr(s.OPENAI_API_KEY) if s.OPENAI_API_KEY is not None else None,
+#     )
 
 @lru_cache(maxsize=1)
 def get_text_parser_llm() -> ChatOpenAI:
