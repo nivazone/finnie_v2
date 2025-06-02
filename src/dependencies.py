@@ -4,7 +4,7 @@ from config import get_settings
 from functools import lru_cache
 from psycopg_pool import AsyncConnectionPool
 from search_providers import TavilySearchClient, SerperSearchClient, SearchProvider
-from langchain.callbacks.streaming_stdout import StreamingStdOutCallbackHandler
+from cli import FinnieStream
 
 @lru_cache(maxsize=1)
 def get_llm(
@@ -19,7 +19,7 @@ def get_llm(
         api_key=s.OPENAI_API_KEY or None,
         temperature=0,
         streaming=streaming,
-        callbacks=callbacks or ([] if not streaming else [StreamingStdOutCallbackHandler()]),
+        callbacks=callbacks or ([] if not streaming else [FinnieStream()]),
     )
 
 @lru_cache(maxsize=1)

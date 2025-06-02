@@ -12,6 +12,7 @@ from agents.supervisor import get_graph
 from config import get_settings
 from logger import log
 from dependencies import get_llm, init_db_pool, close_db_pool
+from rich.console import Console
 
 def draw_graph():
     llm = get_llm()
@@ -27,6 +28,7 @@ async def chat():
     logging.getLogger("pdfminer").setLevel(logging.ERROR)
     load_dotenv()
     s = get_settings()
+    console = Console()
 
     try:
         # 1. initialise DB + streaming LLM + graph
@@ -35,13 +37,13 @@ async def chat():
 
         # 2. keep the whole running chat history
         messages: list = []
-        print("Agent: Hi, how can I help you today?")
+        console.print("[cyan bold]Finnie:[/] Hi, how can I help you today?")
 
         # 3. ctrl-C exits
         signal.signal(signal.SIGINT, lambda *_: sys.exit(0))
 
         while True:
-            user_input = input("You: ").strip()
+            user_input = console.input("[bold green]You:[/] ").strip()
             
             if user_input.lower() in {"exit", "quit"}:
                 break
@@ -60,12 +62,11 @@ async def chat():
             messages = reply["messages"]
 
             # 6. new line after the last streamed token
-            print()
+            console.print()
 
     finally:
         await close_db_pool()
 
 if __name__ == "__main__":
-    # asyncio.run(main())
     asyncio.run(chat())
     # draw_graph()
