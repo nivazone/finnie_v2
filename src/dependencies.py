@@ -33,18 +33,6 @@ def get_financial_insights_llm() -> ChatOpenAI:
         temperature=0,
     )
 
-
-
-
-# def get_llm() -> ChatOpenAI:
-#     s = get_settings()
-
-#     return ChatOpenAI(
-#         model=s.MODEL_NAME,
-#         base_url=s.OPENAI_BASE_URL,
-#         api_key=SecretStr(s.OPENAI_API_KEY) if s.OPENAI_API_KEY is not None else None,
-#     )
-
 @lru_cache(maxsize=1)
 def get_text_parser_llm() -> ChatOpenAI:
     s = get_settings()

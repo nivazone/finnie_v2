@@ -1,2 +1,11 @@
-python-dotenv
-pdfplumber
+python-dotenv>=1.0.0
+pdfplumber>=0.10.3
+langchain-core>=0.1.27
+langchain-openai>=0.0.8
+langsmith>=0.1.22
+pydantic>=2.6.1
+pydantic-settings>=2.1.0
+psycopg>=3.1.18
+psycopg-pool>=3.1.18
+Pillow>=10.2.0
+typing-extensions>=4.9.0
