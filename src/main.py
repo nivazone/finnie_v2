@@ -45,8 +45,7 @@ async def chat():
         signal.signal(signal.SIGINT, lambda *_: sys.exit(0))
 
         while True:
-            # asynchronous, non-erasable prompt
-            with patch_stdout():     # NEW – lets background prints show safely
+            with patch_stdout():
                 user_input = (await session.prompt_async(
                     HTML("<b><ansigreen>You:</ansigreen></b> ")
                 )).strip()
@@ -65,7 +64,7 @@ async def chat():
                 }
             )
             messages = state["messages"]
-            console.print()          # newline after streamed reply
+            console.print()
 
     finally:
         await close_db_pool()

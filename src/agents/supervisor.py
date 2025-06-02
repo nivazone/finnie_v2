@@ -8,7 +8,7 @@ from langchain_core.runnables import Runnable
 from langgraph.graph import START, END, StateGraph
 from .scribe import get_graph as get_scribe_graph
 from .sage import get_graph as get_sage_graph
-from .fallback import fallback
+from .fallback import get_graph as get_fallback_graph
 from logger import log
 from dependencies import get_llm
 
@@ -16,10 +16,11 @@ MEMBERS = ["Scribe", "Sage", "Fallback"]
 OPTIONS = ["FINISH"] + MEMBERS
 
 SYSTEM_PROMPT = """
+Your name is Finnie.
 You are a supervisor managing the following agents: {MEMBERS}.
 Routing rule:
   - Financial documents processing and persisting related requests → Scribe
-  - Insights about persisted financial docuements                  → Sage
+  - Insights about persisted financial docuements, transactions    → Sage
   - Everything else                                                → Fallback
   
 When an agent sets {{"next": "FINISH"}}, reply FINISH.
@@ -53,12 +54,8 @@ def get_graph():
     wf = StateGraph(AgentState)
     wf.add_node("Supervisor", supervisor)
     wf.add_node("Scribe", get_scribe_graph())
-    wf.add_node("Sage", get_sage_graph(llm))
-    wf.add_node("Fallback", partial(
-        lambda st: {
-            "messages": fallback(st)["messages"],
-            "next": "FINISH"
-        }))
+    wf.add_node("Sage", get_sage_graph())
+    wf.add_node("Fallback", get_fallback_graph())
 
     wf.add_edge(START, "Supervisor")
     wf.add_conditional_edges(
