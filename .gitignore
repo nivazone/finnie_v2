@@ -4,3 +4,4 @@ __pycache__/
 statements
 .DS_Store
 .vscode
+*.log
