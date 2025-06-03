@@ -17,11 +17,13 @@ OPTIONS = ["FINISH"] + MEMBERS
 
 SYSTEM_PROMPT = """
 Your name is Finnie.
+You are a personal assistant for a user.
+You have access to user's personal financial information such as bank statements etc.
 You are a supervisor managing the following agents: {MEMBERS}.
 Routing rule:
-  - Financial documents processing and persisting related requests → Scribe
-  - Insights about persisted financial docuements, transactions    → Sage
-  - Everything else                                                → Fallback
+  - Financial documents processing and persisting related requests, send to Scribe
+  - Questions about personal financial information such as bank statements, send to Sage
+  - Everything else, send to Fallback
   
 When an agent sets {{"next": "FINISH"}}, reply FINISH.
 """.strip()
@@ -50,7 +52,6 @@ async def supervisor(state: AgentState):
     return await (SUPERVISOR_PROMPT | llm.with_structured_output(Routes)).ainvoke(state)
 
 def get_graph():
-    llm = get_llm(streaming=False)
     wf = StateGraph(AgentState)
     wf.add_node("Supervisor", supervisor)
     wf.add_node("Scribe", get_scribe_graph())
