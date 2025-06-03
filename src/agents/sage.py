@@ -6,13 +6,14 @@ from state import AgentState
 from langgraph.graph import StateGraph, START, END
 from langgraph.prebuilt import ToolNode
 from functools import partial
-from tools import get_financial_insights
+from tools import get_financial_insights, search_web
 from helpers import needs_tool, update_state
 from dependencies import get_llm
 from logger import log
 
 TOOLS: List[Callable[..., Any]] = [
-    get_financial_insights
+    get_financial_insights,
+    search_web
 ]
 
 async def sage(state: AgentState):
@@ -56,7 +57,7 @@ async def sage(state: AgentState):
     first = await llm_with_tools.ainvoke(sys_msgs + state["messages"])
     return {"messages": [first], "next": None}
 
-def get_graph(llm: ChatOpenAI):
+def get_graph():
     """
     Return a runnable graph whose entry node is Sage and whose
     terminal node sets next='FINISH'.
