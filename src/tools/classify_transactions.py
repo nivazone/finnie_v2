@@ -115,9 +115,10 @@ async def classify_transactions(transactions_ref: str) -> dict:
                 }
 
             enriched = await asyncio.gather(*[fetch_context(tx) for tx in batch])
+            prompt = PROMPT
 
             for entry in enriched:
-                prompt = PROMPT + f"""
+                prompt += f"""
                     ---
                     Transaction id: {entry["transaction_id"]}
                     Description: {entry["description"]}

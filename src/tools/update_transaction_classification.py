@@ -35,6 +35,8 @@ async def update_transaction_classification(classifications_ref: str) -> dict:
         if not results:
             log.warning("[update_transaction_classification] no classifications to update.")
             return {"fatal_err": False}
+        
+        log.info(f"[update_transaction_classification] {len(results)} transactions to classify...")
 
         pool = get_db_pool()
         async with pool.connection() as conn:

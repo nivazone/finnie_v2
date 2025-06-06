@@ -37,8 +37,15 @@ async def scribe(state: AgentState):
             2. parse each plain text version so that you can get a JSON version.
             3. save each statement JSON to database for future use.
             4. wait for each statement to finish parsing and saving to database before proceeding further
-            5. once all statements are parsed and saved to database, get all transactions from the database for each statement and classify them using classify transactions tool.
+            5. once all statements are parsed and saved, get all transactions from the database for each statement and classify them using classify-transactions tool.
             6. update the transaction classification in database.
+        
+        **Progress reporting**
+        - Before you invoke *any* tool, output a single line that starts with `EVENT: starting <tool_name>` (no extra text).  
+        - After the tool finishes (you receive the tool result), output `EVENT: finished <tool_name>` on its own line.  
+        - Do **not** reveal private reasoning or chain of thought.
+        - Normal conversational replies should follow the event lines.
+        
         Statements are located at {state["input_folder"]}.
         """
     )]
