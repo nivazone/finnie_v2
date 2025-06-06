@@ -39,10 +39,10 @@ class FinnieStream(BaseCallbackHandler):
             # stop spinner only once, before first visible token
             if not self._printed_prefix:
                 self._stop_spinner()
-                console.print("[cyan bold]Finnie:[/bold cyan] ", end="")
+                console.print("[cyan bold]Finnie:[/bold cyan] ")
                 self._printed_prefix = True
 
-            console.print(line, style="cyan", end="")
+            console.print(line, style="cyan")
 
     def on_llm_end(self, *_, **__):
         self._stop_spinner()
