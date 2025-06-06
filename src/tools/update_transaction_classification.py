@@ -57,8 +57,6 @@ async def update_transaction_classification(classifications_ref: str) -> dict:
                             WHERE 
                                 id = {tx_id};
                             """
-                        
-                        log.info(f"[update_transaction_classification] sql = {sql}")
 
                         await cur.execute(sql)
                     except Exception as e:
