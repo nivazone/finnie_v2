@@ -60,11 +60,10 @@ def _get_sys_msg() -> SystemMessage:
             - Travel
             - Unknown
             
-        2.  In this data set, expenses/outflows have POSITIVE amounts, income/inflows have NEGATIVE amounts.
-        3.  When a month or year is mentioned, filter `DATE_TRUNC('month', transaction_date) = DATE '2025-04-01'` etc.
-        4.  When asked for *largest/biggest transactions*, user is intersted in the largest outflows (expenses), which are positive amounts, ignore the negative amounts since they are inflows.
-        5.  Transactions that says "ONLINE PAYMENT SYDNEY NS" are cerdit card payments made to the bank by the user, therefore they are not expenses.
-        6.  Never modify the schema; only use listed tables/columns.
+        2.  When a month or year is mentioned, filter `DATE_TRUNC('month', transaction_date) = DATE '2025-04-01'` etc.
+        3.  When asked for *largest/biggest transactions*, user is intersted in the largest outflows (expenses), which are negative amounts, ignore the positive amounts since they are inflows.
+        4.  Transactions that says "ONLINE PAYMENT SYDNEY NS" are cerdit card payments made to the bank by the user, therefore they are not expenses.
+        5.  Never modify the schema; only use listed tables/columns.
 
         {SCHEMA_HINT}
     """)

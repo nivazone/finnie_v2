@@ -133,7 +133,7 @@ This project is licensed under the terms of the license included in the reposito
 - [ ] LLM-Based Anomaly Detection
 - [ ] Automated Financial Summaries
 - [ ] Natural Language Categorization Rules
-- [ ] Tax Deductibility Classification
+- [x] Tax Deductibility Classification
 - [ ] Smart Budgeting Suggestions
-- [ ] Multi-Document Analysis
+- [ ] CSV imports
 - [ ] Financial Insights Dashboard

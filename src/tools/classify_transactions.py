@@ -23,8 +23,11 @@ PROMPT = """
         - Shopping
         - Travel
         - Unknown
+        - Credit Card Payments
 
-    2. Decide each transaction is tax deductible or not. Follow Australian Tax Office rules.
+    2. Transactions with "ONLINE PAYMENT SYDNEY NS" must be classified as "Credit Card Payments".
+
+    3. Decide each transaction is tax deductible or not. Follow Australian Tax Office rules.
         ### Key Rules
         - Work-related expenses are deductible (portion depends on usage).
         - Donations to charities are fully deductible.
@@ -32,7 +35,7 @@ PROMPT = """
         - Mobile/Internet plans are 50 % deductible unless otherwise stated.
         - If unsure, set is_tax_deductible=false and deductible_portion=0.0.
 
-    3. For each transaction, respond with: 
+    4. For each transaction, respond with: 
         - transaction_id 
         - classification
         - is_tax_deductible
