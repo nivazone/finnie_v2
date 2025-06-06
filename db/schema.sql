@@ -11,7 +11,8 @@ CREATE TABLE IF NOT EXISTS statements (
     closing_balance NUMERIC(15, 2),
     credit_limit NUMERIC(15, 2),
     interest_charged NUMERIC(15, 2),
-    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT unique_statement UNIQUE (account_holder, account_name, start_date, end_date)
 );
 
 -- =========================
@@ -24,9 +25,8 @@ CREATE TABLE IF NOT EXISTS transactions (
     transaction_details TEXT,
     amount NUMERIC(15, 2),
     category TEXT,
+    is_tax_deductible BOOLEAN DEFAULT FALSE,
+    deductible_portion NUMERIC(5,2) DEFAULT 0,
     created_at TIMESTAMP WITHOUT TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
-
-ALTER TABLE statements ADD CONSTRAINT unique_statement
-    UNIQUE (account_holder, account_name, start_date, end_date);
 

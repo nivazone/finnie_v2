@@ -10,7 +10,15 @@ async def update_transaction_classification(classifications_ref: str) -> dict:
     that points to a list of classification results.
 
     Args:
-        classifications_ref (str): Ref ID pointing to {"results": [ {transaction_id, classification}, ... ] }
+        classifications_ref (str): Ref ID pointing to 
+            {
+                "results": [
+                    {
+                        transaction_id, 
+                        classification,
+                        is_tax_deductible,
+                        deductible_portion
+                    }, ... ] }
 
     Returns:
         dict:
@@ -27,6 +35,8 @@ async def update_transaction_classification(classifications_ref: str) -> dict:
         if not results:
             log.warning("[update_transaction_classification] no classifications to update.")
             return {"fatal_err": False}
+        
+        log.info(f"[update_transaction_classification] {len(results)} transactions to classify...")
 
         pool = get_db_pool()
         async with pool.connection() as conn:
@@ -35,15 +45,20 @@ async def update_transaction_classification(classifications_ref: str) -> dict:
                     try:
                         tx_id = item["transaction_id"]
                         category = item["classification"]
-
-                        await cur.execute(
+                        is_tax_deductible = item["is_tax_deductible"]
+                        deductible_portion = item["deductible_portion"]
+                        sql = f"""
+                            UPDATE 
+                                transactions
+                            SET 
+                                category = '{category}',
+                                is_tax_deductible = {is_tax_deductible},
+                                deductible_portion = {deductible_portion}
+                            WHERE 
+                                id = {tx_id};
                             """
-                            UPDATE transactions
-                            SET category = %s
-                            WHERE id = %s;
-                            """,
-                            (category, tx_id)
-                        )
+
+                        await cur.execute(sql)
                     except Exception as e:
                         log.error(f"[update_transaction_classification] failed on item {i}: {e}")
                         await conn.rollback()
