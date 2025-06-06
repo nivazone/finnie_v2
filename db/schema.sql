@@ -26,7 +26,7 @@ CREATE TABLE IF NOT EXISTS transactions (
     amount NUMERIC(15, 2),
     category TEXT,
     is_tax_deductible BOOLEAN DEFAULT FALSE,
-    deductible_portion NUMERIC(5,2) DEFAULT 1.00,
+    deductible_portion NUMERIC(5,2) DEFAULT 0,
     created_at TIMESTAMP WITHOUT TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
 

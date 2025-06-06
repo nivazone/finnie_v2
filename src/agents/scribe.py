@@ -29,7 +29,7 @@ TOOLS: List[Callable[..., Any]] = [
 async def scribe(state: AgentState):
     log.info(f"Came to Scribe, fatal_err={state.get('fatal_err', False)}")
 
-    llm: ChatOpenAI = get_llm(streaming=False)
+    llm: ChatOpenAI = get_llm(streaming=True)
     llm_with_tools = llm.bind_tools(TOOLS)
     sys_msgs = [SystemMessage(content=f"""
         Process all available bank statements using the following workflow.
