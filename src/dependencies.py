@@ -9,7 +9,6 @@ from cli import FinnieStream
 @lru_cache(maxsize=1)
 def get_llm(
     streaming: bool = False,
-    callbacks: list | None = None,
 ) -> ChatOpenAI:
     s = get_settings()
 
@@ -19,7 +18,6 @@ def get_llm(
         api_key=s.OPENAI_API_KEY or None,
         temperature=0,
         streaming=streaming,
-        callbacks=callbacks or ([] if not streaming else [FinnieStream()]),
     )
 
 @lru_cache(maxsize=1)

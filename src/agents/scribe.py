@@ -2,7 +2,7 @@ from langchain_core.messages import SystemMessage, ToolMessage
 from langchain_openai import ChatOpenAI
 from langgraph.graph import StateGraph, START, END
 from langgraph.prebuilt import ToolNode
-from functools import partial
+from langchain_core.runnables import RunnableConfig
 from typing import Any, Callable, List
 from state import AgentState
 from helpers import needs_tool, update_state
@@ -26,7 +26,7 @@ TOOLS: List[Callable[..., Any]] = [
     classify_transactions,
 ]
 
-async def scribe(state: AgentState):
+async def scribe(state: AgentState, config: RunnableConfig):
     log.info(f"Came to Scribe, fatal_err={state.get('fatal_err', False)}")
 
     llm: ChatOpenAI = get_llm(streaming=True)
@@ -61,14 +61,14 @@ async def scribe(state: AgentState):
             Explain the error briefly and end the conversation.
             Error details: {err_details}
         """)
-        reply = await llm_with_tools.ainvoke([sys_msg] + state["messages"])
+        reply = await llm_with_tools.ainvoke([sys_msg] + state["messages"], config=config)
         return {"messages": [reply], "next": "FINISH"}
 
     last = state["messages"][-1]
 
     # ── 2nd+ passes: we already have a ToolMessage result ────────────
     if isinstance(last, ToolMessage):
-        reply = await llm_with_tools.ainvoke(sys_msgs + state["messages"])
+        reply = await llm_with_tools.ainvoke(sys_msgs + state["messages"], config=config)
         more_tools_needed = bool(getattr(reply, "tool_calls", []))
         
         return {
@@ -77,7 +77,7 @@ async def scribe(state: AgentState):
         }
 
     # ── 1st pass: ask for a tool ─────────────────────────────────────
-    first = await llm_with_tools.ainvoke(sys_msgs + state["messages"])
+    first = await llm_with_tools.ainvoke(sys_msgs + state["messages"], config=config)
     return {"messages": [first], "next": None}
 
 def get_graph():

@@ -7,51 +7,58 @@ console = Console()
 
 class FinnieStream(BaseCallbackHandler):
     """
-    One Live spinner that keeps running; its text updates on each EVENT line.
-    Normal reply tokens stop the spinner and stream in cyan.
+    One global spinner shared by every nested LLM call.
+    The spinner starts when the first LLM begins and stops after the last ends.
     """
     def __init__(self):
         self._live: Live | None = None
         self._spinner: Spinner | None = None
         self._buffer: str = ""
         self._printed_prefix = False
+        self._depth = 0                      # NEW: how many LLMs are active
 
     # ── LLM lifecycle hooks ─────────────────────────────────────────────
     def on_llm_start(self, *_, **__):
-        self._spinner = Spinner("dots", text="thinking…")
-        self._live = Live(self._spinner, console=console, refresh_per_second=8)
-        self._live.start()
+        if self._depth == 0:                 # only for the first call
+            self._spinner = Spinner("dots", text="thinking…")
+            self._live = Live(self._spinner, console=console, refresh_per_second=8)
+            self._live.start()
+        self._depth += 1                     # track nesting level
 
     def on_llm_new_token(self, token: str, **__):
+        # Accumulate until newline ONLY if we’re in an EVENT
         self._buffer += token
 
-        # process complete lines
-        while "\n" in self._buffer:
+        # ── EVENT line complete? ───────────────────────────────────────────
+        if self._buffer.startswith("EVENT:") and "\n" in self._buffer:
             line, self._buffer = self._buffer.split("\n", 1)
+            if self._spinner:
+                self._spinner.text = line[6:].strip()
+            return
 
-            # ── EVENT: update spinner text ────────────────────────────
-            if line.startswith("EVENT:"):
-                if self._spinner:
-                    self._spinner.text = line[6:].strip()
-                continue
-
-            # ── normal streamed output ───────────────────────────────
-            # stop spinner only once, before first visible token
+        # ── Normal token: print instantly ─────────────────────────────────
+        if not self._buffer.startswith("EVENT:"):
             if not self._printed_prefix:
                 self._stop_spinner()
-                console.print("[cyan bold]Finnie:[/bold cyan] ")
+                console.print("[cyan bold]Finnie:[/bold cyan] ", end="")
                 self._printed_prefix = True
 
-            console.print(line, style="cyan")
+            console.print(token, style="cyan", end="", soft_wrap=True)
+            self._buffer = ""
 
     def on_llm_end(self, *_, **__):
-        self._stop_spinner()
-        if self._printed_prefix:
-            console.print()
-            
-        # reset state
-        self._buffer = ""
-        self._printed_prefix = False
+        self._depth -= 1
+        if self._depth == 0:                 # outer-most call finished
+            self._stop_spinner()
+            if self._printed_prefix:
+                console.print()
+            self._reset_state()
+
+    def on_llm_error(self, *_, **__):        # NEW: clean up on errors
+        self._depth = max(self._depth - 1, 0)
+        if self._depth == 0:
+            self._stop_spinner()
+            self._reset_state()
 
     # ── helpers ────────────────────────────────────────────────────────
     def _stop_spinner(self):
@@ -59,3 +66,7 @@ class FinnieStream(BaseCallbackHandler):
             self._live.stop()
             self._live = None
             self._spinner = None
+
+    def _reset_state(self):
+        self._buffer = ""
+        self._printed_prefix = False

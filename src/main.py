@@ -1,7 +1,7 @@
 from dotenv import load_dotenv
 import logging
 import asyncio, signal, sys, readline
-import asyncio
+from datetime import datetime
 from langchain_openai import ChatOpenAI
 from langchain_core.messages import HumanMessage
 from langsmith import traceable
@@ -16,10 +16,10 @@ from rich.console import Console
 from prompt_toolkit import PromptSession
 from prompt_toolkit.formatted_text import HTML
 from prompt_toolkit.patch_stdout import patch_stdout
+from cli import FinnieStream
 
 def draw_graph():
-    llm = get_llm()
-    graph = get_graph(llm)
+    graph = get_graph()
 
     png_bytes = graph.get_graph(xray=True).draw_mermaid_png(
         draw_method=MermaidDrawMethod.PYPPETEER
@@ -34,6 +34,8 @@ async def chat():
 
     console  = Console()
     session  = PromptSession()
+    callback_handler = FinnieStream()
+    config = {"callbacks": [callback_handler]}
 
     try:
         await init_db_pool()
@@ -45,6 +47,7 @@ async def chat():
         signal.signal(signal.SIGINT, lambda *_: sys.exit(0))
 
         while True:
+            # ── Read user input ────────────────────────────────────────────────
             with patch_stdout():
                 user_input = (await session.prompt_async(
                     HTML("<b><ansigreen>You:</ansigreen></b> ")
@@ -55,15 +58,33 @@ async def chat():
 
             messages.append(HumanMessage(content=user_input))
 
-            state = await graph.ainvoke(
-                {
-                    "messages":    messages,
-                    "input_folder": settings.INPUT_FOLDER,
-                    "fatal_err":   False,
-                    "err_details": None,
-                }
-            )
-            messages = state["messages"]
+            # ── NEW: run the graph with incremental streaming ─────────────────
+            bootstrap_state = {
+                "messages":     messages,
+                "input_folder": settings.INPUT_FOLDER,
+                "fatal_err":    False,
+                "err_details":  None,
+            }
+
+            final_state = {}     # will accumulate the newest values we care about
+
+            async for ns, delta in graph.astream(
+                bootstrap_state,
+                stream_mode="values",
+                subgraphs=True,
+                config=config
+            ):
+                # Pretty breadcrumb of current node / sub-node
+                path = " → ".join(ns) if ns else "ROOT"
+                ts   = datetime.now().strftime("%H:%M:%S")
+                console.print(f"[green]{ts}[/] [bold]{path}[/] {list(delta.keys())}")
+
+                # Preserve updated messages so we can continue the conversation
+                if "messages" in delta:
+                    final_state["messages"] = delta["messages"]
+
+            # ── After the graph finishes for this turn ────────────────────────
+            messages = final_state.get("messages", messages)
             console.print()
 
     finally:
