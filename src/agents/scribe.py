@@ -3,6 +3,7 @@ from langchain_openai import ChatOpenAI
 from langgraph.graph import StateGraph, START, END
 from langgraph.prebuilt import ToolNode
 from langchain_core.runnables import RunnableConfig
+from langchain_core.callbacks.manager import adispatch_custom_event
 from typing import Any, Callable, List
 from state import AgentState
 from helpers import needs_tool, update_state
@@ -29,6 +30,8 @@ TOOLS: List[Callable[..., Any]] = [
 async def scribe(state: AgentState, config: RunnableConfig):
     log.info(f"Came to Scribe, fatal_err={state.get('fatal_err', False)}")
 
+    await adispatch_custom_event("on_scribe_start", {"friendly_msg": "Processing statements...\n"}, config=config)
+
     llm: ChatOpenAI = get_llm(streaming=True)
     llm_with_tools = llm.bind_tools(TOOLS)
     sys_msgs = [SystemMessage(content=f"""
@@ -41,8 +44,6 @@ async def scribe(state: AgentState, config: RunnableConfig):
             6. update the transaction classification in database.
         
         **Progress reporting**
-        - Before you invoke *any* tool, output a single line that starts with `EVENT: starting <tool_name>` (no extra text).  
-        - After the tool finishes (you receive the tool result), output `EVENT: finished <tool_name>` on its own line.  
         - Do **not** reveal private reasoning or chain of thought.
         - Normal conversational replies should follow the event lines.
         

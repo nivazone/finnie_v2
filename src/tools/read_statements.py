@@ -6,12 +6,14 @@ from logger import log
 from typing import Optional
 from langchain_core.tools import tool
 from memory_store import put_item
+from langchain_core.runnables import RunnableConfig
+from langchain_core.callbacks.manager import adispatch_custom_event
 
 def _to_float(value):
     return float(value) if isinstance(value, Decimal) else value
 
 @tool
-async def read_transactions(start_date: Optional[str] = None, end_date: Optional[str] = None) -> dict:
+async def read_transactions(config: RunnableConfig, start_date: Optional[str] = None, end_date: Optional[str] = None) -> dict:
     """
     Reads transaction data for a given period from the transactions table and stores
     the result in memory. Returns a reference ID to retrieve it later.
@@ -33,6 +35,8 @@ async def read_transactions(start_date: Optional[str] = None, end_date: Optional
     """
     
     log.info(f"[read_transactions] Reading transactions from DB...")
+
+    await adispatch_custom_event("on_read_transactions", {"friendly_msg": "Retrieving transactions...\n"}, config=config)
 
     try:
         pool = get_db_pool()

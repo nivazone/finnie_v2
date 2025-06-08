@@ -74,11 +74,6 @@ async def chat():
                 subgraphs=True,
                 config=config
             ):
-                # Pretty breadcrumb of current node / sub-node
-                # path = " → ".join(ns) if ns else "ROOT"
-                # ts   = datetime.now().strftime("%H:%M:%S")
-                # console.print(f"[green]{ts}[/] [bold]{path}[/] {list(delta.keys())}")
-
                 # Preserve updated messages so we can continue the conversation
                 if "messages" in delta:
                     final_state["messages"] = delta["messages"]

@@ -3,6 +3,8 @@ from typing import List
 from pydantic import BaseModel, Field
 from logger import log
 from langchain_core.tools import tool
+from langchain_core.runnables.config import RunnableConfig
+from langchain_core.callbacks.manager import adispatch_custom_event
 import asyncio
 from decimal import Decimal
 from memory_store import get_item, put_item
@@ -56,12 +58,15 @@ async def _parse_statement_text(text: str) -> dict:
 
 # ─────────────────────────────── batch tool ──────────────────────────────
 @tool
-async def parse_all_statements(ref_ids: List[str]) -> dict:
+async def parse_all_statements(ref_ids: List[str], config: RunnableConfig) -> dict:
     """
     Parses multiple plain-text statements (referenced via memory keys) into
     structured JSON, returning new memory keys of parsed results.
     """
     log.info(f"[parse_all_statements] parsing {len(ref_ids)} statement(s)…")
+
+    await adispatch_custom_event("on_parse_all_statements", {"friendly_msg": "Parsing text...\n"}, config=config)
+
     parsed_refs = []
 
     for i, ref_id in enumerate(ref_ids):

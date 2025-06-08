@@ -2,6 +2,8 @@ from rich.console import Console
 from rich.live import Live
 from rich.spinner import Spinner
 from langchain.callbacks.base import BaseCallbackHandler
+import asyncio
+import re
 
 console = Console()
 
@@ -18,55 +20,67 @@ class FinnieStream(BaseCallbackHandler):
         self._depth = 0                      # NEW: how many LLMs are active
 
     # ── LLM lifecycle hooks ─────────────────────────────────────────────
-    def on_llm_start(self, *_, **__):
-        if self._depth == 0:                 # only for the first call
-            self._spinner = Spinner("dots", text="thinking…")
-            self._live = Live(self._spinner, console=console, refresh_per_second=8)
-            self._live.start()
-        self._depth += 1                     # track nesting level
+    # def on_llm_start(self, *_, **__):
+    #     if self._depth == 0:                 # only for the first call
+    #         self._spinner = Spinner("dots", text="thinking…")
+    #         self._live = Live(self._spinner, console=console, refresh_per_second=8)
+    #         self._live.start()
+    #     self._depth += 1                     # track nesting level
+
+    async def on_custom_event(self, name, data, run_id, tags=None, metadata=None, **kwargs):
+        msg = data["friendly_msg"]
+
+        tokens = re.finditer(r"\S+|\s", msg, re.DOTALL)
+
+        for match in tokens:
+            token = match.group(0)
+            console.print(token, style="gray23", end="", soft_wrap=True)
+            await asyncio.sleep(0.05)
+        
 
     def on_llm_new_token(self, token: str, **__):
         # Accumulate until newline ONLY if we’re in an EVENT
-        self._buffer += token
+        # self._buffer += token
+        console.print(token, style="cyan", end="", soft_wrap=True)
 
         # ── EVENT line complete? ───────────────────────────────────────────
-        if self._buffer.startswith("EVENT:") and "\n" in self._buffer:
-            line, self._buffer = self._buffer.split("\n", 1)
-            if self._spinner:
-                self._spinner.text = line[6:].strip()
-            return
+        # if (self._buffer.startswith("<START_EVENT>") and "<\START_EVENT>" in self._buffer) or (self._buffer.startswith("<END_EVENT>") and "<\END_EVENT>" in self._buffer):
+        #     line, self._buffer = self._buffer.split("<\START_EVENT>", 1)
+        #     if self._spinner:
+        #         self._spinner.text = line.replace("<START_EVENT>", "").replace("<\START_EVENT>", "")
+        #     return
 
         # ── Normal token: print instantly ─────────────────────────────────
-        if not self._buffer.startswith("EVENT:"):
-            if not self._printed_prefix:
-                self._stop_spinner()
-                console.print("[cyan bold]Finnie:[/bold cyan] ", end="")
-                self._printed_prefix = True
+        # if not self._buffer.startswith("<START_EVENT>"):
+        #     if not self._printed_prefix:
+        #         self._stop_spinner()
+        #         console.print("[cyan bold]Finnie:[/bold cyan] ", end="")
+        #         self._printed_prefix = True
 
-            console.print(token, style="cyan", end="", soft_wrap=True)
-            self._buffer = ""
+        #     console.print(token, style="cyan", end="", soft_wrap=True)
+        #     self._buffer = ""
 
-    def on_llm_end(self, *_, **__):
-        self._depth -= 1
-        if self._depth == 0:                 # outer-most call finished
-            self._stop_spinner()
-            if self._printed_prefix:
-                console.print()
-            self._reset_state()
+    # def on_llm_end(self, *_, **__):
+    #     self._depth -= 1
+    #     if self._depth == 0:                 # outer-most call finished
+    #         self._stop_spinner()
+    #         if self._printed_prefix:
+    #             console.print()
+    #         self._reset_state()
 
-    def on_llm_error(self, *_, **__):        # NEW: clean up on errors
-        self._depth = max(self._depth - 1, 0)
-        if self._depth == 0:
-            self._stop_spinner()
-            self._reset_state()
+    # def on_llm_error(self, *_, **__):        # NEW: clean up on errors
+    #     self._depth = max(self._depth - 1, 0)
+    #     if self._depth == 0:
+    #         self._stop_spinner()
+    #         self._reset_state()
 
     # ── helpers ────────────────────────────────────────────────────────
-    def _stop_spinner(self):
-        if self._live:
-            self._live.stop()
-            self._live = None
-            self._spinner = None
+    # def _stop_spinner(self):
+    #     if self._live:
+    #         self._live.stop()
+    #         self._live = None
+    #         self._spinner = None
 
-    def _reset_state(self):
-        self._buffer = ""
-        self._printed_prefix = False
+    # def _reset_state(self):
+    #     self._buffer = ""
+    #     self._printed_prefix = False

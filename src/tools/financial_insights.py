@@ -5,6 +5,8 @@ from psycopg.rows import dict_row
 import json, textwrap, traceback
 from dependencies import get_financial_insights_llm, get_db_pool
 from logger import log
+from langchain_core.runnables import RunnableConfig
+from langchain_core.callbacks.manager import adispatch_custom_event
 
 MAX_RETRIES = 5
 SCHEMA_HINT = textwrap.dedent("""\
@@ -69,7 +71,7 @@ def _get_sys_msg() -> SystemMessage:
     """)
 
 @tool
-async def get_financial_insights(question: str) -> dict:
+async def get_financial_insights(question: str, config: RunnableConfig) -> dict:
     """
     Provides financial insights by querying the database.
 
@@ -94,7 +96,7 @@ async def get_financial_insights(question: str) -> dict:
             } on failure. 
     """
 
-
+    await adispatch_custom_event("on_get_financial_insights", {"friendly_msg": "Getting financial insights...\n"}, config=config)
         
     error_feedback: str | None = None
 

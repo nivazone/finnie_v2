@@ -4,7 +4,6 @@ from config import get_settings
 from functools import lru_cache
 from psycopg_pool import AsyncConnectionPool
 from search_providers import TavilySearchClient, SerperSearchClient, SearchProvider
-from cli import FinnieStream
 
 @lru_cache(maxsize=1)
 def get_llm(
