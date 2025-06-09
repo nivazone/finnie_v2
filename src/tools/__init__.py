@@ -1,4 +1,4 @@
-from .extract_text import extract_all_texts
+from .extract_text import extract_all_pdf_texts, extract_all_csv_texts
 from .parse_statements import parse_all_statements
 from .write_statements import write_all_statements
 from .read_statements import read_transactions
@@ -8,7 +8,8 @@ from .financial_insights import get_financial_insights
 from .search_web import search_web
 
 __all__ = [
-    "extract_all_texts",
+    "extract_all_pdf_texts",
+    "extract_all_csv_texts",
     "parse_all_statements", 
     "write_all_statements",
     "read_transactions",

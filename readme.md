@@ -2,6 +2,8 @@
 
 Finnie is an intelligent agent that automates the processing of financial documents, particularly bank statements. It uses Large Language Models (LLMs) and web search capabilities to extract, parse, classify, and store financial data in a structured format.
 
+![Finnie in Action](images/finnie-convo.png)
+
 ## 🌟 Features
 
 - **Document Processing**
@@ -28,10 +30,10 @@ Finnie is an intelligent agent that automates the processing of financial docume
 
 ### Prerequisites
 
-- Python 3.10 or higher
+- Python 3.12.11 or higher
 - PostgreSQL database
 - OpenAI API key
-- Tavily or Serper API key (for web search)
+- Tavily or Serper API key (optional, you can turn off web based enrichment)
 
 ### Installation
 
@@ -42,20 +44,13 @@ git clone https://github.com/yourusername/finnie_v2.git
 cd finnie_v2
 ```
 
-2. Create and activate a virtual environment:
-
-```bash
-python -m venv ml-train
-source ml-train/bin/activate  # On Windows: ml-train\Scripts\activate
-```
-
-3. Install dependencies:
+2. Install dependencies:
 
 ```bash
 pip install -r requirements.txt
 ```
 
-4. Set up environment variables in `.env`:
+3. Set up environment variables in `.env`:
 
 ```env
 OPENAI_API_KEY=your_openai_key
@@ -67,7 +62,7 @@ POSTGRES_USER=your_user
 POSTGRES_PASSWORD=your_password
 ```
 
-5. Initialize the database:
+4. Initialize the database:
 
 ```bash
 psql -U your_user -d your_db_name -f db/schema.sql
@@ -130,10 +125,11 @@ This project is licensed under the terms of the license included in the reposito
 - [x] Conversational Financial Assistant
 - [x] Streaming Support
 - [x] Conversation Memory
+- [ ] Tax deductible transactions report
 - [ ] LLM-Based Anomaly Detection
 - [ ] Automated Financial Summaries
-- [ ] Natural Language Categorization Rules
+- [ ] Natural Language Categorization rules
 - [x] Tax Deductibility Classification
 - [ ] Smart Budgeting Suggestions
-- [ ] CSV imports
+- [x] CSV bank statements support
 - [ ] Financial Insights Dashboard

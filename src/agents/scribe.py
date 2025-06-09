@@ -10,7 +10,8 @@ from helpers import needs_tool, update_state
 from logger import log
 from dependencies import get_llm
 from tools import (
-    extract_all_texts,
+    extract_all_pdf_texts,
+    extract_all_csv_texts,
     parse_all_statements,
     read_transactions,
     update_transaction_classification,
@@ -19,7 +20,8 @@ from tools import (
 )
 
 TOOLS: List[Callable[..., Any]] = [
-    extract_all_texts,
+    extract_all_pdf_texts,
+    extract_all_csv_texts,
     parse_all_statements,
     write_all_statements,
     read_transactions,
@@ -37,11 +39,14 @@ async def scribe(state: AgentState, config: RunnableConfig):
     sys_msgs = [SystemMessage(content=f"""
         Process all available bank statements using the following workflow.
             1. get plain text version for each statement in the folder.
-            2. parse each plain text version so that you can get a JSON version.
-            3. save each statement JSON to database for future use.
-            4. wait for each statement to finish parsing and saving to database before proceeding further
-            5. once all statements are parsed and saved, get all transactions from the database for each statement and classify them using classify-transactions tool.
-            6. update the transaction classification in database.
+            2. each statement could be a .PDF or a .CSV.
+            3. you should not parse both formats, it should be either the .PDF or .CSV, not both, as this would result in duplicate transactions.
+            4. if user did not specify of which format to parse, ask them and get clarification. do not choose for them, always get input type from the user.
+            5. parse each plain text version so that you can get a JSON version.
+            6. save each statement JSON to database for future use.
+            7. wait for each statement to finish parsing and saving to database before proceeding further
+            8. once all statements are parsed and saved, get all transactions from the database for each statement and classify them using classify-transactions tool.
+            9. update the transaction classification in database.
         
         **Progress reporting**
         - Do **not** reveal private reasoning or chain of thought.

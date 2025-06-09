@@ -9,3 +9,10 @@ psycopg>=3.1.18
 psycopg-pool>=3.1.18
 Pillow>=10.2.0
 typing-extensions>=4.9.0
+rich>=13.7.0
+prompt-toolkit>=3.0.43
+langgraph>=0.0.20
+pyppeteer>=1.0.2
+langchain_tavily>=0.0.3
+langchain_community
+cachetools
