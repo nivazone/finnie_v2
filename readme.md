@@ -130,9 +130,10 @@ This project is licensed under the terms of the license included in the reposito
 - [x] Conversational Financial Assistant
 - [x] Streaming Support
 - [x] Conversation Memory
+- [ ] Tax deductible transactions report
 - [ ] LLM-Based Anomaly Detection
 - [ ] Automated Financial Summaries
-- [ ] Natural Language Categorization Rules
+- [ ] Natural Language Categorization rules
 - [x] Tax Deductibility Classification
 - [ ] Smart Budgeting Suggestions
 - [x] CSV bank statements support

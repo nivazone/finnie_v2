@@ -17,6 +17,7 @@ from prompt_toolkit import PromptSession
 from prompt_toolkit.formatted_text import HTML
 from prompt_toolkit.patch_stdout import patch_stdout
 from cli import FinnieStream
+from langchain_core.runnables.config import RunnableConfig
 
 def draw_graph():
     graph = get_graph()
@@ -35,7 +36,10 @@ async def chat():
     console  = Console()
     session  = PromptSession()
     callback_handler = FinnieStream()
-    config = {"callbacks": [callback_handler]}
+    config = RunnableConfig(
+        callbacks=[callback_handler],
+        tags=["Finnie"]
+    )
 
     try:
         await init_db_pool()
