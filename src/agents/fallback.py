@@ -9,6 +9,8 @@ from langgraph.graph import StateGraph, START, END
 from langgraph.prebuilt import ToolNode
 from helpers import needs_tool, update_state
 from langchain_core.runnables import RunnableConfig
+from langchain_core.runnables import RunnableConfig
+from langchain_core.callbacks.manager import adispatch_custom_event
 
 TOOLS: List[Callable[..., Any]] = [
     search_web
@@ -16,6 +18,9 @@ TOOLS: List[Callable[..., Any]] = [
 
 async def fallback(state: AgentState, config: RunnableConfig):
     log.info(f"Came to Fallback, fatal_err={state.get('fatal_err', False)}")
+
+    await adispatch_custom_event("on_fallback_start", {"friendly_msg": "thinking...\n"}, config=config)
+
     llm = get_llm(streaming=True)
     llm_with_tools = llm.bind_tools(TOOLS)
 
@@ -25,8 +30,8 @@ async def fallback(state: AgentState, config: RunnableConfig):
         content="""
             The request doesn't match any other agents capabilities.
             You're the last resort agent.
-            Let the user know that you are not best equiped to answer.
-            You are equipped with a search tool to get latest information.
+            Try best to answer with your knowledge.
+            You are equipped with a search tool to get latest information from web.
         """
     )]
 

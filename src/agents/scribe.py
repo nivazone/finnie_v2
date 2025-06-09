@@ -30,7 +30,7 @@ TOOLS: List[Callable[..., Any]] = [
 async def scribe(state: AgentState, config: RunnableConfig):
     log.info(f"Came to Scribe, fatal_err={state.get('fatal_err', False)}")
 
-    await adispatch_custom_event("on_scribe_start", {"friendly_msg": "Processing statements...\n"}, config=config)
+    await adispatch_custom_event("on_scribe_start", {"friendly_msg": "thinking...\n"}, config=config)
 
     llm: ChatOpenAI = get_llm(streaming=True)
     llm_with_tools = llm.bind_tools(TOOLS)

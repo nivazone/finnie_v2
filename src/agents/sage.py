@@ -11,6 +11,8 @@ from helpers import needs_tool, update_state
 from dependencies import get_llm
 from logger import log
 from langchain_core.runnables import RunnableConfig
+from langchain_core.runnables import RunnableConfig
+from langchain_core.callbacks.manager import adispatch_custom_event
 
 TOOLS: List[Callable[..., Any]] = [
     get_financial_insights,
@@ -19,6 +21,8 @@ TOOLS: List[Callable[..., Any]] = [
 
 async def sage(state: AgentState, config: RunnableConfig):
     log.info(f"Came to Sage, fatal_err={state.get('fatal_err', False)}")
+
+    await adispatch_custom_event("on_sage_start", {"friendly_msg": "thinking...\n"}, config=config)
 
     llm: ChatOpenAI = get_llm(streaming=True)
     llm_with_tools = llm.bind_tools(TOOLS)
