@@ -2,6 +2,8 @@ import pdfplumber
 from langchain_core.tools import tool
 from logger import log
 import os
+from langchain_core.runnables.config import RunnableConfig
+from langchain_core.callbacks.manager import adispatch_custom_event
 from memory_store import put_item
 
 def _extract_text(path: str) -> dict:
@@ -33,7 +35,7 @@ def _extract_text(path: str) -> dict:
     }
 
 @tool
-def extract_all_texts(folder_path: str) -> dict:
+async def extract_all_texts(folder_path: str, config: RunnableConfig) -> dict:
     """
     Iterates over all PDF files in a folder and extracts their content using extract_text.
 
@@ -50,6 +52,8 @@ def extract_all_texts(folder_path: str) -> dict:
     """
 
     log.info(f"[extract_all_texts] going through {folder_path}...")
+
+    await adispatch_custom_event("on_extract_all_texts", {"friendly_msg": "Extracting text...\n"}, config=config)
 
     ref_ids = []
     

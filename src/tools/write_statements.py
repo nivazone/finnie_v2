@@ -4,6 +4,8 @@ import json
 from logger import log
 from psycopg import AsyncConnection, AsyncCursor
 from memory_store import get_item
+from langchain_core.runnables import RunnableConfig
+from langchain_core.callbacks.manager import adispatch_custom_event
 
 async def _write_statement(json_str: str, conn: AsyncConnection, cur: AsyncCursor) -> None:
     """
@@ -69,7 +71,7 @@ async def _write_statement(json_str: str, conn: AsyncConnection, cur: AsyncCurso
         ))
 
 @tool
-async def write_all_statements(parsed_refs: list[str]) -> dict:
+async def write_all_statements(parsed_refs: list[str], config: RunnableConfig) -> dict:
     """
     Writes a batch of structured bank statement data to the database using references
     to parsed statement objects.
@@ -92,6 +94,8 @@ async def write_all_statements(parsed_refs: list[str]) -> dict:
     """
 
     log.info(f"[write_all_statements] saving {len(parsed_refs)} statements to database...")
+
+    await adispatch_custom_event("on_write_all_statements", {"friendly_msg": "Saving transactions...\n"}, config=config)
 
     try:
         pool = get_db_pool()

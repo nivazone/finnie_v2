@@ -1,9 +1,11 @@
 from langchain_core.tools import tool
 from dependencies import get_search_client
 from logger import log
+from langchain_core.runnables import RunnableConfig
+from langchain_core.callbacks.manager import adispatch_custom_event
 
 @tool
-async def search_web(query: str) -> dict:
+async def search_web(query: str, config: RunnableConfig) -> dict:
     """
     Search the web for information about a given query.
 
@@ -30,6 +32,8 @@ async def search_web(query: str) -> dict:
     """
 
     log.info(f"[search_web] Searching web for {query}")
+
+    await adispatch_custom_event("on_search_web", {"friendly_msg": "Searching web...\n"}, config=config)
 
     try:
         search_client = get_search_client()

@@ -8,13 +8,19 @@ from logger import log
 from langgraph.graph import StateGraph, START, END
 from langgraph.prebuilt import ToolNode
 from helpers import needs_tool, update_state
+from langchain_core.runnables import RunnableConfig
+from langchain_core.runnables import RunnableConfig
+from langchain_core.callbacks.manager import adispatch_custom_event
 
 TOOLS: List[Callable[..., Any]] = [
     search_web
 ]
 
-async def fallback(state: AgentState):
+async def fallback(state: AgentState, config: RunnableConfig):
     log.info(f"Came to Fallback, fatal_err={state.get('fatal_err', False)}")
+
+    await adispatch_custom_event("on_fallback_start", {"friendly_msg": "thinking...\n"}, config=config)
+
     llm = get_llm(streaming=True)
     llm_with_tools = llm.bind_tools(TOOLS)
 
@@ -24,8 +30,8 @@ async def fallback(state: AgentState):
         content="""
             The request doesn't match any other agents capabilities.
             You're the last resort agent.
-            Let the user know that you are not best equiped to answer.
-            You are equipped with a search tool to get latest information.
+            Try best to answer with your knowledge.
+            You are equipped with a search tool to get latest information from web.
         """
     )]
 
@@ -39,14 +45,14 @@ async def fallback(state: AgentState):
             Explain the error briefly and end the conversation.
             Error details: {err_details}
         """)
-        reply = await llm_with_tools.ainvoke([sys_msg] + state["messages"])
+        reply = await llm_with_tools.ainvoke([sys_msg] + state["messages"], config=config)
         return {"messages": [reply], "next": "FINISH"}
 
     last = state["messages"][-1]
 
     # 2nd pass (tool result already present) -----------------------------
     if isinstance(last, ToolMessage):
-        reply = await llm_with_tools.ainvoke(sys_msgs + state["messages"])
+        reply = await llm_with_tools.ainvoke(sys_msgs + state["messages"], config=config)
         more_tools_needed = bool(getattr(reply, "tool_calls", []))
         
         return {
@@ -55,7 +61,7 @@ async def fallback(state: AgentState):
         }
 
     # 1st pass (no tool result yet) --------------------------------------
-    first = await llm_with_tools.ainvoke(sys_msgs + state["messages"])
+    first = await llm_with_tools.ainvoke(sys_msgs + state["messages"], config=config)
     return {"messages": [first], "next": None}    
 
 def get_graph():

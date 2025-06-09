@@ -2,9 +2,11 @@ from dependencies import get_db_pool
 from langchain_core.tools import tool
 from logger import log
 from memory_store import get_item
+from langchain_core.runnables import RunnableConfig
+from langchain_core.callbacks.manager import adispatch_custom_event
 
 @tool
-async def update_transaction_classification(classifications_ref: str) -> dict:
+async def update_transaction_classification(classifications_ref: str, config: RunnableConfig) -> dict:
     """
     Updates multiple transaction categories in the database using a memory store reference
     that points to a list of classification results.
@@ -27,6 +29,8 @@ async def update_transaction_classification(classifications_ref: str) -> dict:
     """
 
     log.info(f"[update_transaction_classification] updating classifications from {classifications_ref}...")
+
+    await adispatch_custom_event("on_update_transaction_classification", {"friendly_msg": "Updating transaction classification...\n"}, config=config)
 
     try:
         data = get_item(classifications_ref)

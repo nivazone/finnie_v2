@@ -10,14 +10,19 @@ from tools import get_financial_insights, search_web
 from helpers import needs_tool, update_state
 from dependencies import get_llm
 from logger import log
+from langchain_core.runnables import RunnableConfig
+from langchain_core.runnables import RunnableConfig
+from langchain_core.callbacks.manager import adispatch_custom_event
 
 TOOLS: List[Callable[..., Any]] = [
     get_financial_insights,
     search_web
 ]
 
-async def sage(state: AgentState):
+async def sage(state: AgentState, config: RunnableConfig):
     log.info(f"Came to Sage, fatal_err={state.get('fatal_err', False)}")
+
+    await adispatch_custom_event("on_sage_start", {"friendly_msg": "thinking...\n"}, config=config)
 
     llm: ChatOpenAI = get_llm(streaming=True)
     llm_with_tools = llm.bind_tools(TOOLS)
@@ -38,14 +43,14 @@ async def sage(state: AgentState):
             Explain the error briefly and end the conversation.
             Error details: {err_details}
         """)
-        reply = await llm_with_tools.ainvoke([sys_msg] + state["messages"])
+        reply = await llm_with_tools.ainvoke([sys_msg] + state["messages"], config=config)
         return {"messages": [reply], "next": "FINISH"}
 
     last = state["messages"][-1]
 
     # 2nd pass (tool result already present) -----------------------------
     if isinstance(last, ToolMessage):
-        reply = await llm_with_tools.ainvoke(sys_msgs + state["messages"])
+        reply = await llm_with_tools.ainvoke(sys_msgs + state["messages"], config=config)
         more_tools_needed = bool(getattr(reply, "tool_calls", []))
         
         return {
@@ -54,7 +59,7 @@ async def sage(state: AgentState):
         }
 
     # 1st pass (no tool result yet) --------------------------------------
-    first = await llm_with_tools.ainvoke(sys_msgs + state["messages"])
+    first = await llm_with_tools.ainvoke(sys_msgs + state["messages"], config=config)
     return {"messages": [first], "next": None}
 
 def get_graph():

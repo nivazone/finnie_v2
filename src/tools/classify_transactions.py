@@ -6,6 +6,8 @@ import asyncio
 from decimal import Decimal
 from logger import log
 from memory_store import get_item, put_item
+from langchain_core.runnables import RunnableConfig
+from langchain_core.callbacks.manager import adispatch_custom_event
 
 BATCH_SIZE = 50
 DELAY_BETWEEN_BATCHES = 1.0
@@ -66,7 +68,7 @@ class TransactionClassifications(BaseModel):
     results: List[TransactionClassification]
 
 @tool
-async def classify_transactions(transactions_ref: str) -> dict:
+async def classify_transactions(transactions_ref: str, config: RunnableConfig) -> dict:
     """
     Classifies a list of bank transactions into categories and tax deductibility using web context and an LLM.
     Transactions are read from memory using a provided reference ID.
@@ -93,6 +95,8 @@ async def classify_transactions(transactions_ref: str) -> dict:
         transactions = transactions_data.get("transactions", [])
 
         log.info(f"[classify_transactions] classifying {len(transactions)} transactions...")
+
+        await adispatch_custom_event("on_classify_transactions", {"friendly_msg": "Classifying transactions...\n"}, config=config)
 
         if not transactions:
             return {"classifications_ref": put_item({"results": []}), "fatal_err": False}
