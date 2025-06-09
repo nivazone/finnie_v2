@@ -135,5 +135,5 @@ This project is licensed under the terms of the license included in the reposito
 - [ ] Natural Language Categorization Rules
 - [x] Tax Deductibility Classification
 - [ ] Smart Budgeting Suggestions
-- [ ] CSV imports
+- [x] CSV bank statements support
 - [ ] Financial Insights Dashboard
