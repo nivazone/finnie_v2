@@ -22,6 +22,7 @@ Sign convention:
 
 - Do NOT include "CR"/"DR" text—use the sign only.
 - Use YYYY-MM-DD dates and include every transaction in order.
+- Account holder, Account name and account number can be found under Metadata section.
 """
 
 class Transaction(BaseModel):
@@ -34,12 +35,7 @@ class BankStatement(BaseModel):
     """Structured bank statement."""
     account_holder: str = Field(description="Name of the account holder")
     account_name: str = Field(description="Name or label of the account")
-    start_date: str = Field(description="Statement start date in YYYY-MM-DD format")
-    end_date: str = Field(description="Statement end date in YYYY-MM-DD format")
-    opening_balance: float = Field(description="Opening balance at the start of the period")
-    closing_balance: float = Field(description="Closing balance at the end of the period")
-    credit_limit: float = Field(description="Credit limit (if applicable)")
-    interest_charged: float = Field(description="Interest charges for the period")
+    account_number: str = Field(description="Account number")
     transactions: List[Transaction] = Field(description="List of transactions")
 
 async def _parse_statement_text(text: str) -> dict:
@@ -72,8 +68,24 @@ async def parse_all_statements(ref_ids: List[str], config: RunnableConfig) -> di
     for i, ref_id in enumerate(ref_ids):
         try:
             log.info(f"[parse_all_statements] parsing {ref_id} ({i+1}/{len(ref_ids)})")
-            raw_text = get_item(ref_id)
-            result = await _parse_statement_text(raw_text)
+            item = get_item(ref_id)
+
+            log.info(item)
+
+            raw_text = item["extracted_text"]
+            metadata = item["metadata"]
+            account_holder = metadata["account_holder"]
+            account_name = metadata["account_name"]
+            account_number = metadata["account_number"]
+            all_text = f"""
+            Metadata:
+            - account holder: {account_holder}
+            - account name: {account_name}
+            - account number: {account_number}
+            Raw text:
+                {raw_text}
+            """
+            result = await _parse_statement_text(all_text)
             parsed_ref = put_item({"parsed_text": result["parsed_text"]})
             parsed_refs.append(parsed_ref)
 

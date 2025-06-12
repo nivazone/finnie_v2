@@ -37,7 +37,7 @@ async def scribe(state: AgentState, config: RunnableConfig):
     llm: ChatOpenAI = get_llm(streaming=True)
     llm_with_tools = llm.bind_tools(TOOLS)
     sys_msgs = [SystemMessage(content=f"""
-        Process all available bank statements using the following workflow.
+        - Process all available bank statements using the following workflow.
             1. get plain text version for each statement in the folder.
             2. each statement could be a .PDF or a .CSV.
             3. you should not parse both formats, it should be either the .PDF or .CSV, not both, as this would result in duplicate transactions.
@@ -48,11 +48,8 @@ async def scribe(state: AgentState, config: RunnableConfig):
             8. once all statements are parsed and saved, get all transactions from the database for each statement and classify them using classify-transactions tool.
             9. update the transaction classification in database.
         
-        **Progress reporting**
-        - Do **not** reveal private reasoning or chain of thought.
-        - Normal conversational replies should follow the event lines.
-        
-        Statements are located at {state["input_folder"]}.
+        - Do NOT reveal private reasoning or chain of thought.
+        - Statements are located at {state["input_folder"]}.
         """
     )]
 

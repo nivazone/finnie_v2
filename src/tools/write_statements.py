@@ -20,29 +20,19 @@ async def _write_statement(json_str: str, conn: AsyncConnection, cur: AsyncCurso
     parsed_data = json.loads(json_str)
 
     await cur.execute("""
-        INSERT INTO statements 
+        INSERT INTO accounts 
             (
-                account_holder, 
-                account_name, 
-                start_date, 
-                end_date, 
-                opening_balance, 
-                closing_balance, 
-                credit_limit, 
-                interest_charged
+                account_holder,
+                account_name,
+                account_number
             )
         VALUES 
-            (%s, %s, %s, %s, %s, %s, %s, %s)
+            (%s, %s, %s)
         RETURNING id;
     """, (
         parsed_data["account_holder"],
         parsed_data["account_name"],
-        parsed_data["start_date"],
-        parsed_data["end_date"],
-        parsed_data["opening_balance"],
-        parsed_data["closing_balance"],
-        parsed_data["credit_limit"],
-        parsed_data["interest_charged"]
+        parsed_data["account_number"]
     ))
 
     row = await cur.fetchone()
@@ -50,13 +40,13 @@ async def _write_statement(json_str: str, conn: AsyncConnection, cur: AsyncCurso
     if row is None:
         raise Exception("Failed to insert statement: no ID returned from database.")
 
-    statement_id = row[0]
+    account_id = row[0]
 
     for tx in parsed_data["transactions"]:
         await cur.execute("""
             INSERT INTO transactions 
                 (
-                    statement_id, 
+                    account_id, 
                     transaction_date, 
                     transaction_details, 
                     amount
@@ -64,7 +54,7 @@ async def _write_statement(json_str: str, conn: AsyncConnection, cur: AsyncCurso
             VALUES 
                 (%s, %s, %s, %s);
         """, (
-            statement_id,
+            account_id,
             tx['transaction_date'],
             tx['transaction_details'],
             tx['amount']

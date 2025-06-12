@@ -49,7 +49,7 @@ async def read_transactions(config: RunnableConfig, start_date: Optional[str] = 
                         transaction_details,
                         amount,
                         category,
-                        statement_id,
+                        account_id,
                         created_at
                     FROM transactions
                 """
@@ -76,7 +76,7 @@ async def read_transactions(config: RunnableConfig, start_date: Optional[str] = 
                         "description": row["transaction_details"],
                         "amount": _to_float(row["amount"]),
                         "category": row.get("category"),
-                        "statement_id": row["statement_id"],
+                        "account_id": row["account_id"],
                         "created_at": row["created_at"].isoformat() if row["created_at"] else None
                     }
                     for row in rows
